@@ -299,7 +299,7 @@ if __name__ == "__main__":
     from symcc.types.ast import Assign
     from sympy import S
 
-    dim = 2
+    dim = 3
 
     expr = sympify("Ni_x*Nj_x")
 
@@ -327,6 +327,16 @@ if __name__ == "__main__":
     g1 = Symbol('g1', integer=True)
     n1 = Symbol('n1', integer=True)
 
+    g2 = Symbol('g2', integer=True)
+    n2 = Symbol('n2', integer=True)
+
+    g3 = Symbol('g3', integer=True)
+    n3 = Symbol('n3', integer=True)
+
+    if dim >= 3:
+        body = [For(g3, (1, n3, 1), body)]
+    if dim >= 2:
+        body = [For(g2, (1, n2, 1), body)]
     body  = For(g1, (1, n1, 1), body)
 
     print(">>>> local_vars : " + str(set(local_vars)))
