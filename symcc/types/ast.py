@@ -50,10 +50,12 @@ from sympy.core.singleton import Singleton
 from sympy.core.basic import Basic
 from sympy.core.sympify import _sympify
 from sympy.core.compatibility import with_metaclass
+from sympy.sets.fancysets import Range
 from sympy.tensor import Indexed
 from sympy.matrices import ImmutableDenseMatrix
 from sympy.matrices.expressions.matexpr import MatrixSymbol, MatrixElement
 from sympy.utilities.iterables import iterable
+
 
 
 class Assign(Basic):
@@ -265,7 +267,14 @@ class For(Basic):
         target = _sympify(target)
         if not iterable(iter):
             raise TypeError("iter must be an iterable")
-        iter = _sympify(iter)
+        if type(iter) == tuple:
+            # this is a hack, since Range does not accept non valued Integers.
+            r = Range(iter[0], 10000000, iter[2])
+            r._args = iter
+            iter = r
+        else:
+            iter = _sympify(iter)
+
         if not iterable(body):
             raise TypeError("body must be an iterable")
         body = Tuple(*(_sympify(i) for i in body))

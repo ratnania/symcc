@@ -1,6 +1,9 @@
 from __future__ import print_function, division
 
-from sympy.core import C, Add, Mul, Pow, S
+from sympy.core.basic import Basic
+from sympy.core.function import Lambda
+from sympy.core.symbol import Symbol
+from sympy.core import Add, Mul, Pow, S
 from sympy.core.compatibility import default_sort_key, string_types
 from sympy.core.sympify import _sympify
 from sympy.core.mul import _keep_coeff
@@ -37,8 +40,8 @@ class CodePrinter(StrPrinter):
         """
 
         if isinstance(assign_to, string_types):
-            assign_to = C.Symbol(assign_to)
-        elif not isinstance(assign_to, (C.Basic, type(None))):
+            assign_to = Symbol(assign_to)
+        elif not isinstance(assign_to, (Basic, type(None))):
             raise TypeError("{0} cannot assign to object of type {1}".format(
                     type(self).__name__, type(assign_to)))
 
@@ -92,7 +95,7 @@ class CodePrinter(StrPrinter):
                         break
             if func is not None:
                 return "%s(%s)" % (func, self.stringify(expr.args, ", "))
-        elif hasattr(expr, '_imp_') and isinstance(expr._imp_, C.Lambda):
+        elif hasattr(expr, '_imp_') and isinstance(expr._imp_, Lambda):
             # inlined function
             return self._print(expr._imp_(*expr.args))
         else:
