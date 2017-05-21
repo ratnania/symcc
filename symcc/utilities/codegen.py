@@ -14,7 +14,7 @@ from sympy.tensor import Idx, Indexed, IndexedBase
 from sympy import Eq
 from sympy.core.compatibility import is_sequence, StringIO, string_types
 
-from symcc.types.ast import Assign
+from symcc.types.ast import Assign, For
 from symcc.printers.fcode import fcode, FCodePrinter
 
 __all__ = ["codegen"]
@@ -340,10 +340,16 @@ class Routine(object):
                 raise ValueError("Unknown Routine argument: %s" % arg)
 
         for r in results:
-            if not isinstance(r, Assign):
-                if not isinstance(r, Result):
-                    raise ValueError("Unknown Routine result: %s" % r)
+            if not isinstance(r, Result):
+                raise ValueError("Unknown Routine result: %s" % r)
+            try:
                 symbols.update(r.expr.free_symbols)
+            except:
+                pass
+#            if (not isinstance(r, Assign)) and (not isinstance(r, For)):
+#                if not isinstance(r, Result):
+#                    raise ValueError("Unknown Routine result: %s" % r)
+#                symbols.update(r.expr.free_symbols)
 
         for stmt in statements:
             if not isinstance(stmt, Assign):
@@ -446,8 +452,6 @@ class CodeGen(object):
         OutputArgument and InOutArguments.
 
         """
-        print(">>>> expr : " + str(expr))
-
         if is_sequence(expr) and not isinstance(expr, (MatrixBase, MatrixExpr)):
             if not expr:
                 raise ValueError("No expression given")
@@ -464,7 +468,15 @@ class CodeGen(object):
         global_vars = set() if global_vars is None else set(global_vars)
 
         # symbols that should be arguments
-        symbols = expressions.free_symbols - local_vars - global_vars
+        free_symbols = set([])
+        for expr in expressions:
+            if not isinstance(expr, For):
+                free_symbols += expr.free_symbols
+            else:
+                free_symbols.add(expr.target)
+                free_symbols.add(expr.iterable.stop)
+
+        symbols = free_symbols - local_vars - global_vars
         new_symbols = set([])
         new_symbols.update(symbols)
 
@@ -846,9 +858,16 @@ class FCodeGen(CodeGen):
             else:
                 raise ValueError("Unknown variable : %s" % result)
 
+
             if not skip:
-                constants, not_fortran, f_expr = fcode(expr,
-                    assign_to=assign_to, source_format='free', human=False)
+                constants   = set([])
+                not_fortran = set([])
+                f_expr      = ""
+                if isinstance(expr, For):
+                    f_expr = fcode(expr, source_format='free', human=False)
+                else:
+                    constants, not_fortran, f_expr = fcode(expr,
+                        assign_to=assign_to, source_format='free', human=False)
 
                 for obj, v in sorted(constants, key=str):
                     t = get_default_datatype(obj)
@@ -863,6 +882,8 @@ class FCodeGen(CodeGen):
                     declarations.append("%s :: %s\n" % (t.fname, name))
 
                 code_lines.append("%s\n" % f_expr)
+
+
         return declarations + code_lines
 
     def _indent_code(self, codelines):
