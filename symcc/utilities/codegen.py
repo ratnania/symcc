@@ -8,13 +8,14 @@ import textwrap
 from sympy import sympify
 from sympy.core import Symbol, S, Tuple, Equality, Function, Basic
 from sympy.printing import ccode
-from sympy.printing.fcode import fcode, FCodePrinter
 from sympy.matrices import (MatrixSymbol, ImmutableMatrix, MatrixBase,
                             MatrixExpr, MatrixSlice)
 from sympy.tensor import Idx, Indexed, IndexedBase
 from sympy import Eq
 from sympy.core.compatibility import is_sequence, StringIO, string_types
 
+from symcc.types.ast import Assign
+from symcc.printers.fcode import fcode, FCodePrinter
 
 class DataType(object):
     """Holds strings for a certain datatype in different languages."""
@@ -468,7 +469,34 @@ class CodeGen(object):
                     raise CodeGenError("Only Indexed, Symbol, or MatrixSymbol "
                                        "can define output arguments.")
 
-#                print (">>>> symbol " + str(symbol))
+                if expr.has(symbol):
+                    output_args.append(
+                        InOutArgument(symbol, out_arg, expr, dimensions=dims))
+                elif not(symbol in local_vars):
+                    output_args.append(
+                        OutputArgument(symbol, out_arg, expr, dimensions=dims))
+
+                # avoid duplicate arguments
+                if not(symbol in local_vars):
+                    symbols.remove(symbol)
+            elif isinstance(expr, Assign):
+                out_arg = expr.lhs
+                expr = expr.rhs
+                print (">>>> " + str(expr) + "   " + str(out_arg))
+                if isinstance(out_arg, Indexed):
+                    dims = tuple([ (S.Zero, dim - 1) for dim in out_arg.shape])
+                    symbol = out_arg.base.label
+                elif isinstance(out_arg, Symbol):
+                    dims = []
+                    symbol = out_arg
+                elif isinstance(out_arg, MatrixSymbol):
+                    dims = tuple([ (S.Zero, dim - 1) for dim in out_arg.shape])
+                    symbol = out_arg
+                else:
+                    raise CodeGenError("Only Indexed, Symbol, or MatrixSymbol "
+                                       "can define output arguments.")
+
+                print (">>>> symbol " + str(symbol))
                 if expr.has(symbol):
                     output_args.append(
                         InOutArgument(symbol, out_arg, expr, dimensions=dims))
@@ -1192,9 +1220,12 @@ def codegen(name_expr, language, prefix=None, project="project",
 
     # Construct Routines appropriate for this code_gen from (name, expr) pairs.
     routines = []
+    print ("-------")
     for name, expr in name_expr:
+        print (name, expr)
         routines.append(code_gen.routine(name, expr, argument_sequence,
                                          global_vars, local_vars=local_vars))
+    print ("-------")
 
     # Write the code.
     return code_gen.write(routines, prefix, to_files, header, empty)

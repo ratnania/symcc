@@ -9,11 +9,11 @@ from sympy.core import S, Add, N
 from sympy.core.function import Function
 from sympy.core.compatibility import string_types
 from sympy.printing.precedence import precedence
+from sympy.printing.codeprinter import CodePrinter
 from sympy.sets.fancysets import Range
 
 from symcc.types.ast import (Assign, Result, InArgument,
         OutArgument, InOutArgument, Variable)
-from symcc.printers.codeprinter import CodePrinter
 
 __all__ = ["FCodePrinter", "fcode"]
 
@@ -46,6 +46,10 @@ class FCodePrinter(CodePrinter):
         'full_prec': 'auto',
         'precision': 15,
         'user_functions': {},
+        'human': True,
+        'source_format': 'fixed',
+        'contract': True,
+        'standard': 77
     }
 
     _operators = {
