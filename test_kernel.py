@@ -287,12 +287,18 @@ if __name__ == "__main__":
     args       = set([])
 
     for stmt in stmts:
-        body = body.union(stmt.body)
-        local_vars = local_vars.union(stmt.local_vars)
-        args = args.union(stmt.args)
+        if isinstance(stmt, Basic):
+            body = body.union(stmt.body)
+            local_vars = local_vars.union(stmt.local_vars)
+            args = args.union(stmt.args)
+        elif isinstance(stmt, For):
+            body = body.union(stmt.body)
+            local_vars = local_vars.union(stmt.target)
+            args = args.union(stmt.iterable.stop)
+        else:
+            raise ValueError("Unknown statement : %s" % stmt)
 
 #    body += [Assign(contribution, S.Zero)]
-#    body  = prelude_geometry(dim)
 #    body += prelude_testfunction(dim)
 #    body += prelude_trialfunction(dim)
 
@@ -301,7 +307,7 @@ if __name__ == "__main__":
 
     body  = For(g1, (1, n1, 1), body)
 
-    local_vars = local_vars.union({ g1, n1 })
+#    local_vars = local_vars.union({ n1 })
 
     [(f_name, f_code), header] = codegen(("kernel", body), "F95", \
                                          header=False, empty=True, \
