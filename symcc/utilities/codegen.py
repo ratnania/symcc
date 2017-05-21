@@ -864,7 +864,6 @@ class FCodeGen(CodeGen):
                 constants   = set([])
                 not_fortran = set([])
                 f_expr      = ""
-                print(">>>> expr : " + str(expr))
                 if isinstance(expr, For):
                     f_expr = fcode(expr, source_format='free', human=False)
                 else:
