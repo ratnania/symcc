@@ -17,6 +17,8 @@ from sympy.core.compatibility import is_sequence, StringIO, string_types
 from symcc.types.ast import Assign
 from symcc.printers.fcode import fcode, FCodePrinter
 
+__all__ = ["codegen"]
+
 class DataType(object):
     """Holds strings for a certain datatype in different languages."""
     def __init__(self, fname, luaname):
@@ -444,6 +446,7 @@ class CodeGen(object):
         OutputArgument and InOutArguments.
 
         """
+        print(">>>> expr : " + str(expr))
 
         if is_sequence(expr) and not isinstance(expr, (MatrixBase, MatrixExpr)):
             if not expr:
@@ -832,8 +835,11 @@ class FCodeGen(CodeGen):
             elif isinstance(result, (OutputArgument, InOutArgument)):
                 assign_to = result.result_var
                 expr      = result.expr
-                if Eq(expr, assign_to):
-                    skip = True
+                try:
+                    if Eq(expr, assign_to):
+                        skip = True
+                except:
+                    pass
             elif isinstance(result, Assign):
                 assign_to = result.lhs
                 expr      = result.rhs
