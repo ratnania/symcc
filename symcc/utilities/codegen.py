@@ -1265,11 +1265,9 @@ def codegen(name_expr, language, prefix=None, project="project",
 
     # Construct Routines appropriate for this code_gen from (name, expr) pairs.
     routines = []
-    print ("-------")
     for name, expr in name_expr:
         routines.append(code_gen.routine(name, expr, argument_sequence, statements,
                                          global_vars, local_vars=local_vars))
-    print ("-------")
 
     # Write the code.
     return code_gen.write(routines, prefix, to_files, header, empty)
