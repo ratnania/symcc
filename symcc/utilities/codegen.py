@@ -389,14 +389,11 @@ class Routine(object):
         may not be used will be included in the set.
 
         """
-        v = set(self.local_vars)
+        v = set([])
         for arg in self.arguments:
             v.add(arg.name)
         for res in self.results:
             v.add(res.result_var)
-#        for stmt in self.statements:
-#            if isinstance(stmt, Assign):
-#                v.add(stmt.lhs)
         return v
 
     @property
@@ -518,6 +515,12 @@ class CodeGen(object):
                 # avoid duplicate arguments
                 if not(symbol in local_vars):
                     symbols.remove(symbol)
+            elif isinstance(expr, (ImmutableMatrix, MatrixSlice)):
+                # Create a "dummy" MatrixSymbol to use as the Output arg
+                out_arg = MatrixSymbol('out_%s' % abs(hash(expr)), *expr.shape)
+                dims = tuple([(S.Zero, dim - 1) for dim in out_arg.shape])
+                output_args.append(
+                    OutputArgument(out_arg, out_arg, expr, dimensions=dims))
             elif isinstance(expr, Assign):
                 out_arg = expr.lhs
                 expr = expr.rhs
@@ -543,12 +546,6 @@ class CodeGen(object):
                     symbols.remove(symbol)
 
                 stmts.append(Assign(out_arg, expr))
-            elif isinstance(expr, (ImmutableMatrix, MatrixSlice)):
-                # Create a "dummy" MatrixSymbol to use as the Output arg
-                out_arg = MatrixSymbol('out_%s' % abs(hash(expr)), *expr.shape)
-                dims = tuple([(S.Zero, dim - 1) for dim in out_arg.shape])
-                output_args.append(
-                    OutputArgument(out_arg, out_arg, expr, dimensions=dims))
             else:
                 return_val.append(Result(expr))
 #                if not isinstance(expr, Assign):
@@ -838,7 +835,7 @@ class FCodeGen(CodeGen):
     def _call_printer(self, routine):
         declarations = []
         code_lines = []
-        variables = routine.result_variables + list(routine.statements)
+        variables = list(set(routine.result_variables + list(routine.statements)))
         for result in variables:
             expr = None
             skip = False
@@ -883,7 +880,6 @@ class FCodeGen(CodeGen):
                     declarations.append("%s :: %s\n" % (t.fname, name))
 
                 code_lines.append("%s\n" % f_expr)
-
 
         return declarations + code_lines
 

@@ -10,47 +10,6 @@ from sympy.core.sympify import sympify
 
 
 
-# ...
-def prelude_trialfunction(dim):
-    n1 = Symbol('n1', integer=True)
-    n2 = Symbol('n2', integer=True)
-    n3 = Symbol('n3', integer=True)
-
-    g1 = Idx('g1', n1)
-    g2 = Idx('g2', n2)
-    g3 = Idx('g3', n3)
-
-    arr_Nj1_0 = IndexedBase('arr_Nj1_0')
-    arr_Nj2_0 = IndexedBase('arr_Nj2_0')
-    arr_Nj3_0 = IndexedBase('arr_Nj3_0')
-
-    arr_Nj1_s = IndexedBase('arr_Nj1_s')
-    arr_Nj2_s = IndexedBase('arr_Nj2_s')
-    arr_Nj3_s = IndexedBase('arr_Nj3_s')
-
-    Nj_0  = Symbol('Nj_0')
-    Nj_u  = Symbol('Nj_u')
-    Nj_v  = Symbol('Nj_v')
-    Nj_w  = Symbol('Nj_w')
-
-    body = []
-
-    if dim == 1:
-        body.append(Assign(Nj_0, arr_Nj1_0[g1]))
-        body.append(Assign(Nj_u, arr_Nj1_s[g1]))
-    if dim == 2:
-        body.append(Assign(Nj_0, arr_Nj1_0[g1] * arr_Nj2_0[g2]))
-        body.append(Assign(Nj_u, arr_Nj1_s[g1] * arr_Nj2_0[g2]))
-        body.append(Assign(Nj_v, arr_Nj1_0[g1] * arr_Nj2_s[g2]))
-    if dim == 3:
-        body.append(Assign(Nj_0, arr_Nj1_0[g1] * arr_Nj2_0[g2] * arr_Nj3_0[g3]))
-        body.append(Assign(Nj_u, arr_Nj1_s[g1] * arr_Nj2_0[g2] * arr_Nj3_0[g3]))
-        body.append(Assign(Nj_v, arr_Nj1_0[g1] * arr_Nj2_s[g2] * arr_Nj3_0[g3]))
-        body.append(Assign(Nj_w, arr_Nj1_0[g1] * arr_Nj2_0[g2] * arr_Nj3_s[g3]))
-
-    return body
-# ...
-
 
 # ...
 def build_weak_formulation(contribution, expr):
@@ -144,7 +103,9 @@ class Pullback(Basic):
         Nj_y  = Symbol('Nj_y')
         Nj_z  = Symbol('Nj_z')
 
-        body = [Assign(Nj_x,Nj_u), Assign(Nj_y,Nj_v), Assign(Nj_z,Nj_w)][:dim]
+        body  = []
+        body += [Assign(Ni_x,Ni_u), Assign(Ni_y,Ni_v), Assign(Ni_z,Ni_w)][:dim]
+        body += [Assign(Nj_x,Nj_u), Assign(Nj_y,Nj_v), Assign(Nj_z,Nj_w)][:dim]
 
         local_vars  = []
 
@@ -160,21 +121,22 @@ class Pullback(Basic):
 class Geometry(Basic):
     def __init__(self, dim):
         # ...
+        n1 = Symbol('n1', integer=True)
+        n2 = Symbol('n2', integer=True)
+        n3 = Symbol('n3', integer=True)
+
         arr_x = IndexedBase('arr_x')
         arr_y = IndexedBase('arr_y')
         arr_z = IndexedBase('arr_z')
 
         arr_wvol = IndexedBase('arr_wvol')
 
-        args  = [arr_wvol]
+        args  = [n1, n2, n3][:dim]
+        args += [arr_wvol]
         args += [arr_x, arr_y, arr_z][:dim]
         # ...
 
         # ...
-        n1 = Symbol('n1', integer=True)
-        n2 = Symbol('n2', integer=True)
-        n3 = Symbol('n3', integer=True)
-
         g1 = Idx('g1', n1)
         g2 = Idx('g2', n2)
         g3 = Idx('g3', n3)
@@ -187,8 +149,6 @@ class Geometry(Basic):
 
         local_vars  = [wvol]
 
-        local_vars += [n1, n2, n3][:dim]
-        local_vars += [g1, g2, g3][:dim]
         local_vars += [ x,  y,  z][:dim]
         # ...
 
@@ -223,6 +183,10 @@ class Geometry(Basic):
 class TestFunction(Basic):
     def __init__(self, dim):
         # ...
+        n1 = Symbol('n1', integer=True)
+        n2 = Symbol('n2', integer=True)
+        n3 = Symbol('n3', integer=True)
+
         arr_Ni1_0 = IndexedBase('arr_Ni1_0')
         arr_Ni2_0 = IndexedBase('arr_Ni2_0')
         arr_Ni3_0 = IndexedBase('arr_Ni3_0')
@@ -232,15 +196,12 @@ class TestFunction(Basic):
         arr_Ni3_s = IndexedBase('arr_Ni3_s')
 
         args  = []
+        args += [n1, n2, n3][:dim]
         args += [arr_Ni1_0, arr_Ni2_0, arr_Ni3_0][:dim]
         args += [arr_Ni1_s, arr_Ni2_s, arr_Ni3_s][:dim]
         # ...
 
         # ...
-        n1 = Symbol('n1', integer=True)
-        n2 = Symbol('n2', integer=True)
-        n3 = Symbol('n3', integer=True)
-
         g1 = Idx('g1', n1)
         g2 = Idx('g2', n2)
         g3 = Idx('g3', n3)
@@ -252,8 +213,6 @@ class TestFunction(Basic):
 
         local_vars  = [Ni_0]
 
-        local_vars += [n1, n2, n3][:dim]
-        local_vars += [g1, g2, g3][:dim]
         local_vars += [Ni_u, Ni_v, Ni_w][:dim]
         # ...
 
@@ -277,6 +236,62 @@ class TestFunction(Basic):
         super(TestFunction, self).__init__(body, local_vars=local_vars, args=args)
 
 
+class TrialFunction(Basic):
+    def __init__(self, dim):
+        # ...
+        n1 = Symbol('n1', integer=True)
+        n2 = Symbol('n2', integer=True)
+        n3 = Symbol('n3', integer=True)
+
+        arr_Nj1_0 = IndexedBase('arr_Nj1_0')
+        arr_Nj2_0 = IndexedBase('arr_Nj2_0')
+        arr_Nj3_0 = IndexedBase('arr_Nj3_0')
+
+        arr_Nj1_s = IndexedBase('arr_Nj1_s')
+        arr_Nj2_s = IndexedBase('arr_Nj2_s')
+        arr_Nj3_s = IndexedBase('arr_Nj3_s')
+
+        args  = []
+        args += [n1, n2, n3][:dim]
+        args += [arr_Nj1_0, arr_Nj2_0, arr_Nj3_0][:dim]
+        args += [arr_Nj1_s, arr_Nj2_s, arr_Nj3_s][:dim]
+        # ...
+
+        # ...
+        g1 = Idx('g1', n1)
+        g2 = Idx('g2', n2)
+        g3 = Idx('g3', n3)
+
+        Nj_0  = Symbol('Nj_0')
+        Nj_u  = Symbol('Nj_u')
+        Nj_v  = Symbol('Nj_v')
+        Nj_w  = Symbol('Nj_w')
+
+        local_vars  = [Nj_0]
+
+        local_vars += [Nj_u, Nj_v, Nj_w][:dim]
+        # ...
+
+        # ...
+        body = []
+
+        if dim == 1:
+            body.append(Assign(Nj_0, arr_Nj1_0[g1]))
+            body.append(Assign(Nj_u, arr_Nj1_s[g1]))
+        if dim == 2:
+            body.append(Assign(Nj_0, arr_Nj1_0[g1] * arr_Nj2_0[g2]))
+            body.append(Assign(Nj_u, arr_Nj1_s[g1] * arr_Nj2_0[g2]))
+            body.append(Assign(Nj_v, arr_Nj1_0[g1] * arr_Nj2_s[g2]))
+        if dim == 3:
+            body.append(Assign(Nj_0, arr_Nj1_0[g1] * arr_Nj2_0[g2] * arr_Nj3_0[g3]))
+            body.append(Assign(Nj_u, arr_Nj1_s[g1] * arr_Nj2_0[g2] * arr_Nj3_0[g3]))
+            body.append(Assign(Nj_v, arr_Nj1_0[g1] * arr_Nj2_s[g2] * arr_Nj3_0[g3]))
+            body.append(Assign(Nj_w, arr_Nj1_0[g1] * arr_Nj2_0[g2] * arr_Nj3_s[g3]))
+        # ...
+
+        super(TrialFunction, self).__init__(body, local_vars=local_vars, args=args)
+
+
 ########################################
 if __name__ == "__main__":
     from symcc.printers import fcode # not working with Assign
@@ -284,12 +299,12 @@ if __name__ == "__main__":
     from symcc.types.ast import Assign
     from sympy import S
 
-    dim = 1
+    dim = 2
 
     expr = sympify("Ni_x*Nj_x")
 
     stmts  = []
-    stmts += [Geometry(dim), TestFunction(dim), Pullback(dim)]
+    stmts += [Geometry(dim), TestFunction(dim), TrialFunction(dim), Pullback(dim)]
 
     body       = []
     local_vars = []
@@ -308,15 +323,13 @@ if __name__ == "__main__":
             raise ValueError("Unknown statement : %s" % stmt)
 
 #    body += [Assign(contribution, S.Zero)]
-#    body += prelude_testfunction(dim)
-#    body += prelude_trialfunction(dim)
 
     g1 = Symbol('g1', integer=True)
     n1 = Symbol('n1', integer=True)
 
     body  = For(g1, (1, n1, 1), body)
 
-#    local_vars = local_vars.union({ n1 })
+    print(">>>> local_vars : " + str(set(local_vars)))
 
     [(f_name, f_code), header] = codegen(("kernel", body), "F95", \
                                          header=False, empty=True, \
@@ -324,32 +337,3 @@ if __name__ == "__main__":
                                          local_vars=set(local_vars))
 
     print(f_code)
-
-
-
-#
-#    dim = 1
-#
-##    expr = sympify("Ni_x*Nj_x + Ni_y*Nj_y")
-#    expr = sympify("Ni_x*Nj_x")
-#
-#    wvol = Symbol("wvol")
-#    contribution = Symbol("contribution")
-#
-#    Ni_u  = Symbol('Ni_u')
-#    Ni_x  = Symbol('Ni_x')
-#    Nj_u  = Symbol('Nj_u')
-#    Nj_x  = Symbol('Nj_x')
-#
-#    body  = []
-#    body += [Assign(contribution, S.Zero)]
-#    body += kernel(dim, expr=expr)
-#
-#    local_vars = { Ni_u, Ni_x, Nj_u, Nj_x, wvol, contribution }
-#
-#    [(f_name, f_code), header] = codegen(("kernel", body), "F95", \
-#                                         header=False, empty=True, \
-#                                         argument_sequence=(contribution, ), \
-#                                         local_vars=local_vars)
-#
-#    print(f_code)
