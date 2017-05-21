@@ -10,17 +10,6 @@ from sympy.core.sympify import sympify
 
 
 
-
-# ...
-def build_weak_formulation(contribution, expr):
-    contribution = Symbol("contribution")
-    wvol = Symbol("wvol")
-
-    rhs = contribution + expr * wvol
-
-    return Assign(contribution, rhs)
-# ...
-
 # ...
 def kernel(dim, expr=None):
     main = None
@@ -28,28 +17,9 @@ def kernel(dim, expr=None):
 
     body = []
 
-#    body  = prelude_geometry(dim)
-#    body += prelude_testfunction(dim)
-#    body += prelude_trialfunction(dim)
-    body += prelude_pullback(dim)
 #    if expr is not None:
 #        body += [build_weak_formulation(contribution, expr)]
 
-    g1 = Symbol('g1', integer=True)
-    n1 = Symbol('n1', integer=True)
-
-    g2 = Symbol('g2', integer=True)
-    n2 = Symbol('n2', integer=True)
-
-    g3 = Symbol('g3', integer=True)
-    n3 = Symbol('n3', integer=True)
-
-#    if dim >= 3:
-#        body = [For(g3, (1, n3, 1), body)]
-#    if dim >= 2:
-#        body = [For(g2, (1, n2, 1), body)]
-#
-#    main = For(g1, (1, n1, 1), body)
 
 
     main = body
@@ -292,6 +262,17 @@ class TrialFunction(Basic):
         super(TrialFunction, self).__init__(body, local_vars=local_vars, args=args)
 
 
+class Formulation(Basic):
+    def __init__(self, expr):
+        contribution = Symbol("contribution")
+        wvol = Symbol("wvol")
+
+        body       = [Assign(contribution, contribution + expr * wvol)]
+        local_vars = [contribution]
+
+        super(Formulation, self).__init__(body, local_vars=local_vars)
+
+
 ########################################
 if __name__ == "__main__":
     from symcc.printers import fcode # not working with Assign
@@ -302,9 +283,14 @@ if __name__ == "__main__":
     dim = 3
 
     expr = sympify("Ni_x*Nj_x")
+#    if expr is not None:
+#        body += [build_weak_formulation(contribution, expr)]
 
     stmts  = []
-    stmts += [Geometry(dim), TestFunction(dim), TrialFunction(dim), Pullback(dim)]
+    stmts += [Geometry(dim), \
+              TestFunction(dim), TrialFunction(dim), \
+              Pullback(dim), \
+              Formulation(expr)]
 
     body       = []
     local_vars = []
@@ -322,7 +308,7 @@ if __name__ == "__main__":
         else:
             raise ValueError("Unknown statement : %s" % stmt)
 
-#    body += [Assign(contribution, S.Zero)]
+    contribution = Symbol("contribution")
 
     g1 = Symbol('g1', integer=True)
     n1 = Symbol('n1', integer=True)
@@ -338,6 +324,8 @@ if __name__ == "__main__":
     if dim >= 2:
         body = [For(g2, (1, n2, 1), body)]
     body  = For(g1, (1, n1, 1), body)
+
+#    body  = [Assign(contribution, S.Zero), For(g1, (1, n1, 1), body)]
 
     print(">>>> local_vars : " + str(set(local_vars)))
 
