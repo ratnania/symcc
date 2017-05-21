@@ -526,12 +526,9 @@ class CodeGen(object):
                                        "can define output arguments.")
 
 #                print (">>>> symbol " + str(symbol))
-                if expr.has(symbol):
+                if (expr.has(symbol)) or (not(symbol in local_vars)):
                     output_args.append(
-                        InOutArgument(symbol, out_arg, expr, dimensions=dims))
-                elif not(symbol in local_vars):
-                    output_args.append(
-                        OutputArgument(symbol, out_arg, expr, dimensions=dims))
+                        InOutArgument(symbol, out_arg, out_arg + S.Zero, dimensions=dims))
 
                 # avoid duplicate arguments
                 if not(symbol in local_vars):
@@ -546,6 +543,8 @@ class CodeGen(object):
                     OutputArgument(out_arg, out_arg, expr, dimensions=dims))
             else:
                 return_val.append(Result(expr))
+#                if not isinstance(expr, Assign):
+#                    return_val.append(Result(expr))
 
         arg_list = []
 
@@ -598,6 +597,7 @@ class CodeGen(object):
                     new_args.append(InputArgument(symbol))
             arg_list = new_args
         print(">>>> return_val : " + str(return_val))
+        print(">>>> arg_list : " + str(arg_list))
 
         return Routine(name, arg_list, return_val, stmts, local_vars, global_vars)
 
@@ -836,35 +836,40 @@ class FCodeGen(CodeGen):
         code_lines = []
         variables = routine.result_variables + list(routine.statements)
         for result in variables:
+            print ("++++ result " + str(result))
             expr = None
+            skip = False
             if isinstance(result, Result):
                 assign_to = routine.name
                 expr      = result.expr
             elif isinstance(result, (OutputArgument, InOutArgument)):
                 assign_to = result.result_var
                 expr      = result.expr
+                if Eq(expr, assign_to):
+                    skip = True
             elif isinstance(result, Assign):
                 assign_to = result.lhs
                 expr      = result.rhs
             else:
                 raise ValueError("Unknown variable : %s" % result)
 
-            constants, not_fortran, f_expr = fcode(expr,
-                assign_to=assign_to, source_format='free', human=False)
+            if not skip:
+                constants, not_fortran, f_expr = fcode(expr,
+                    assign_to=assign_to, source_format='free', human=False)
 
-            for obj, v in sorted(constants, key=str):
-                t = get_default_datatype(obj)
-                declarations.append(
-                    "%s, parameter :: %s = %s\n" % (t.fname, obj, v))
-            for obj in sorted(not_fortran, key=str):
-                t = get_default_datatype(obj)
-                if isinstance(obj, Function):
-                    name = obj.func
-                else:
-                    name = obj
-                declarations.append("%s :: %s\n" % (t.fname, name))
+                for obj, v in sorted(constants, key=str):
+                    t = get_default_datatype(obj)
+                    declarations.append(
+                        "%s, parameter :: %s = %s\n" % (t.fname, obj, v))
+                for obj in sorted(not_fortran, key=str):
+                    t = get_default_datatype(obj)
+                    if isinstance(obj, Function):
+                        name = obj.func
+                    else:
+                        name = obj
+                    declarations.append("%s :: %s\n" % (t.fname, name))
 
-            code_lines.append("%s\n" % f_expr)
+                code_lines.append("%s\n" % f_expr)
         print("*********")
         print(">>>> code_lines : " + str(code_lines))
         print("*********")
@@ -1018,17 +1023,24 @@ class LUACodeGen(CodeGen):
                 dereference.append(arg.name)
 
         return_val = None
-        for result in routine.result_variables:
+        variables = routine.result_variables + list(routine.statements)
+        for result in variables:
+            expr = None
             if isinstance(result, Result):
                 assign_to = routine.name + "_result"
                 t = result.get_datatype('lua')
                 code_lines.append("{0} {1};\n".format(t, str(assign_to)))
                 return_val = assign_to
+
+                expr      = result.expr
+            elif isinstance(result, Assign):
+                assign_to = result.lhs
+                expr      = result.rhs
             else:
                 assign_to = result.result_var
 
             try:
-                constants, not_c, c_expr = self._ccode(result.expr, human=False,
+                constants, not_c, c_expr = self._ccode(expr, human=False,
                         assign_to=assign_to, dereference=dereference)
             except AssignmentError:
                 assign_to = result.result_var
