@@ -471,7 +471,8 @@ class CodeGen(object):
         free_symbols = set([])
         for expr in expressions:
             if not isinstance(expr, For):
-                free_symbols += expr.free_symbols
+                for f in expr.free_symbols:
+                    free_symbols.add(f)
             else:
                 free_symbols.add(expr.target)
                 free_symbols.add(expr.iterable.stop)
@@ -863,6 +864,7 @@ class FCodeGen(CodeGen):
                 constants   = set([])
                 not_fortran = set([])
                 f_expr      = ""
+                print(">>>> expr : " + str(expr))
                 if isinstance(expr, For):
                     f_expr = fcode(expr, source_format='free', human=False)
                 else:
