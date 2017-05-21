@@ -323,8 +323,6 @@ class Routine(object):
 
         """
 
-#        print (">>>> Routine created with local_vars : " + str(local_vars))
-
         # extract all input symbols and all symbols appearing in an expression
         input_symbols = set([])
         symbols = set([])
@@ -348,7 +346,6 @@ class Routine(object):
         for stmt in statements:
             if not isinstance(stmt, Assign):
                 raise ValueError("Unknown Routine statement: %s" % stmt)
-            print(">>>> stmt.symbols : " + str(stmt.expr.free_symbols) )
 #            symbols.update(stmt.expr.free_symbols)
 #            symbols.update(stmt.expr.free_symbols - set(arguments))
 
@@ -360,8 +357,6 @@ class Routine(object):
         notcovered = symbols.difference(
             input_symbols.union(local_vars).union(global_vars))
 
-        print(">>>> symbols : " + str(symbols))
-        print(">>>> notcovered : " + str(notcovered))
         if notcovered != set([]):
             raise ValueError("Symbols needed for output are not in input or local " +
                              ", ".join([str(x) for x in notcovered]))
@@ -461,7 +456,6 @@ class CodeGen(object):
         if local_vars is None:
             local_vars = set([])
         local_vars = local_vars.union({i.label for i in expressions.atoms(Idx)})
-#        print (">>>>>>> LOCAL :" + str(local_vars))
 
         # global variables
         global_vars = set() if global_vars is None else set(global_vars)
@@ -511,7 +505,6 @@ class CodeGen(object):
             elif isinstance(expr, Assign):
                 out_arg = expr.lhs
                 expr = expr.rhs
-#                print (">>>> " + str(expr) + "   " + str(out_arg))
                 if isinstance(out_arg, Indexed):
                     dims = tuple([ (S.Zero, dim - 1) for dim in out_arg.shape])
                     symbol = out_arg.base.label
@@ -525,7 +518,6 @@ class CodeGen(object):
                     raise CodeGenError("Only Indexed, Symbol, or MatrixSymbol "
                                        "can define output arguments.")
 
-#                print (">>>> symbol " + str(symbol))
                 if (expr.has(symbol)) or (not(symbol in local_vars)):
                     output_args.append(
                         InOutArgument(symbol, out_arg, out_arg + S.Zero, dimensions=dims))
@@ -596,8 +588,6 @@ class CodeGen(object):
                 except KeyError:
                     new_args.append(InputArgument(symbol))
             arg_list = new_args
-        print(">>>> return_val : " + str(return_val))
-        print(">>>> arg_list : " + str(arg_list))
 
         return Routine(name, arg_list, return_val, stmts, local_vars, global_vars)
 
@@ -636,14 +626,12 @@ class CodeGen(object):
                 with open(filename, "w") as f:
                     dump_fn(self, routines, f, prefix, header, empty)
         else:
-            print (">>>> self.dump_fns : " + str(self.dump_fns))
             result = []
             for dump_fn in self.dump_fns:
                 filename = "%s.%s" % (prefix, dump_fn.extension)
                 contents = StringIO()
                 dump_fn(self, routines, contents, prefix, header, empty)
                 result.append((filename, contents.getvalue()))
-            print(">>>> result : " + str(result))
             return result
 
     def dump_code(self, routines, f, prefix, header=True, empty=True):
@@ -836,7 +824,6 @@ class FCodeGen(CodeGen):
         code_lines = []
         variables = routine.result_variables + list(routine.statements)
         for result in variables:
-            print ("++++ result " + str(result))
             expr = None
             skip = False
             if isinstance(result, Result):
@@ -870,9 +857,6 @@ class FCodeGen(CodeGen):
                     declarations.append("%s :: %s\n" % (t.fname, name))
 
                 code_lines.append("%s\n" % f_expr)
-        print("*********")
-        print(">>>> code_lines : " + str(code_lines))
-        print("*********")
         return declarations + code_lines
 
     def _indent_code(self, codelines):
