@@ -349,8 +349,9 @@ class Routine(object):
         notcovered = symbols.difference(
             input_symbols.union(local_vars).union(global_vars))
 
+        print(">>>> notcovered : " + str(notcovered))
         if notcovered != set([]):
-            raise ValueError("Symbols needed for output are not in input " +
+            raise ValueError("Symbols needed for output are not in input or local " +
                              ", ".join([str(x) for x in notcovered]))
 
         self.name = name
@@ -482,7 +483,7 @@ class CodeGen(object):
             elif isinstance(expr, Assign):
                 out_arg = expr.lhs
                 expr = expr.rhs
-                print (">>>> " + str(expr) + "   " + str(out_arg))
+#                print (">>>> " + str(expr) + "   " + str(out_arg))
                 if isinstance(out_arg, Indexed):
                     dims = tuple([ (S.Zero, dim - 1) for dim in out_arg.shape])
                     symbol = out_arg.base.label
@@ -496,7 +497,7 @@ class CodeGen(object):
                     raise CodeGenError("Only Indexed, Symbol, or MatrixSymbol "
                                        "can define output arguments.")
 
-                print (">>>> symbol " + str(symbol))
+#                print (">>>> symbol " + str(symbol))
                 if expr.has(symbol):
                     output_args.append(
                         InOutArgument(symbol, out_arg, expr, dimensions=dims))
@@ -507,6 +508,8 @@ class CodeGen(object):
                 # avoid duplicate arguments
                 if not(symbol in local_vars):
                     symbols.remove(symbol)
+
+#                return_val.append(Assign(out_arg, expr))
             elif isinstance(expr, (ImmutableMatrix, MatrixSlice)):
                 # Create a "dummy" MatrixSymbol to use as the Output arg
                 out_arg = MatrixSymbol('out_%s' % abs(hash(expr)), *expr.shape)
@@ -566,6 +569,7 @@ class CodeGen(object):
                 except KeyError:
                     new_args.append(InputArgument(symbol))
             arg_list = new_args
+        print(">>>> return_val : " + str(return_val))
 
         return Routine(name, arg_list, return_val, local_vars, global_vars)
 
@@ -604,12 +608,14 @@ class CodeGen(object):
                 with open(filename, "w") as f:
                     dump_fn(self, routines, f, prefix, header, empty)
         else:
+            print (">>>> self.dump_fns : " + str(self.dump_fns))
             result = []
             for dump_fn in self.dump_fns:
                 filename = "%s.%s" % (prefix, dump_fn.extension)
                 contents = StringIO()
                 dump_fn(self, routines, contents, prefix, header, empty)
                 result.append((filename, contents.getvalue()))
+            print(">>>> result : " + str(result))
             return result
 
     def dump_code(self, routines, f, prefix, header=True, empty=True):
@@ -801,12 +807,18 @@ class FCodeGen(CodeGen):
         declarations = []
         code_lines = []
         for result in routine.result_variables:
+            expr = None
             if isinstance(result, Result):
                 assign_to = routine.name
+                expr      = result.expr
             elif isinstance(result, (OutputArgument, InOutArgument)):
                 assign_to = result.result_var
+                expr      = result.expr
+            elif isinstance(result, Assign):
+                assign_to = Assign.lhs.name
+                expr      = Assign.rhs
 
-            constants, not_fortran, f_expr = fcode(result.expr,
+            constants, not_fortran, f_expr = fcode(expr,
                 assign_to=assign_to, source_format='free', human=False)
 
             for obj, v in sorted(constants, key=str):
@@ -822,6 +834,9 @@ class FCodeGen(CodeGen):
                 declarations.append("%s :: %s\n" % (t.fname, name))
 
             code_lines.append("%s\n" % f_expr)
+        print("*********")
+        print(">>>> code_lines : " + str(code_lines))
+        print("*********")
         return declarations + code_lines
 
     def _indent_code(self, codelines):
