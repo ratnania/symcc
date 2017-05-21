@@ -290,7 +290,7 @@ class Routine(object):
 
     """
 
-    def __init__(self, name, arguments, results, local_vars, global_vars):
+    def __init__(self, name, arguments, results, statements, local_vars, global_vars):
         """Initialize a Routine instance.
 
         Parameters
@@ -311,6 +311,9 @@ class Routine(object):
             the left-hand side of a function call.  The difference between
             Results and OutputArguments and when you should use each is
             language-specific.
+
+        statements: list of Statements
+            Anything that is does not appear in results
 
         local_vars : list of Symbols
             These are used internally by the routine.
@@ -337,9 +340,17 @@ class Routine(object):
                 raise ValueError("Unknown Routine argument: %s" % arg)
 
         for r in results:
-            if not isinstance(r, Result):
-                raise ValueError("Unknown Routine result: %s" % r)
-            symbols.update(r.expr.free_symbols)
+            if not isinstance(r, Assign):
+                if not isinstance(r, Result):
+                    raise ValueError("Unknown Routine result: %s" % r)
+                symbols.update(r.expr.free_symbols)
+
+        for stmt in statements:
+            if not isinstance(stmt, Assign):
+                raise ValueError("Unknown Routine statement: %s" % stmt)
+            print(">>>> stmt.symbols : " + str(stmt.expr.free_symbols) )
+#            symbols.update(stmt.expr.free_symbols)
+#            symbols.update(stmt.expr.free_symbols - set(arguments))
 
         symbols = set([s.label if isinstance(s, Idx) else s for s in symbols])
 
@@ -349,6 +360,7 @@ class Routine(object):
         notcovered = symbols.difference(
             input_symbols.union(local_vars).union(global_vars))
 
+        print(">>>> symbols : " + str(symbols))
         print(">>>> notcovered : " + str(notcovered))
         if notcovered != set([]):
             raise ValueError("Symbols needed for output are not in input or local " +
@@ -357,11 +369,12 @@ class Routine(object):
         self.name = name
         self.arguments = arguments
         self.results = results
+        self.statements = statements
         self.local_vars = local_vars
         self.global_vars = global_vars
 
     def __str__(self):
-        return self.__class__.__name__ + "({name!r}, {arguments}, {results}, {local_vars}, {global_vars})".format(**self.__dict__)
+        return self.__class__.__name__ + "({name!r}, {arguments}, {results}, {statements}, {local_vars}, {global_vars})".format(**self.__dict__)
 
     __repr__ = __str__
 
@@ -378,6 +391,9 @@ class Routine(object):
             v.add(arg.name)
         for res in self.results:
             v.add(res.result_var)
+#        for stmt in self.statements:
+#            if isinstance(stmt, Assign):
+#                v.add(stmt.lhs)
         return v
 
     @property
@@ -390,6 +406,17 @@ class Routine(object):
             arg, (OutputArgument, InOutArgument))]
         args.extend(self.results)
         return args
+
+    @property
+    def stmt_variables(self):
+        """Returns a set of all variables used for statements in the routine.
+
+        """
+        v = set([])
+        for stmt in self.statements:
+            if isinstance(stmt, Assign):
+                v.add(stmt.lhs)
+        return v
 
 
 #
@@ -408,7 +435,7 @@ class CodeGen(object):
         """
         self.project = project
 
-    def routine(self, name, expr, argument_sequence, global_vars, local_vars=None):
+    def routine(self, name, expr, argument_sequence, statements, global_vars, local_vars=None):
         """Creates an Routine object that is appropriate for this language.
 
         This implementation is appropriate for at least C/Fortran.  Subclasses
@@ -453,6 +480,7 @@ class CodeGen(object):
         # Decide whether to use output argument or return value
         return_val = []
         output_args = []
+        stmts = []
         for expr in expressions:
             if isinstance(expr, Equality):
                 out_arg = expr.lhs
@@ -509,7 +537,7 @@ class CodeGen(object):
                 if not(symbol in local_vars):
                     symbols.remove(symbol)
 
-#                return_val.append(Assign(out_arg, expr))
+                stmts.append(Assign(out_arg, expr))
             elif isinstance(expr, (ImmutableMatrix, MatrixSlice)):
                 # Create a "dummy" MatrixSymbol to use as the Output arg
                 out_arg = MatrixSymbol('out_%s' % abs(hash(expr)), *expr.shape)
@@ -571,7 +599,7 @@ class CodeGen(object):
             arg_list = new_args
         print(">>>> return_val : " + str(return_val))
 
-        return Routine(name, arg_list, return_val, local_vars, global_vars)
+        return Routine(name, arg_list, return_val, stmts, local_vars, global_vars)
 
     def write(self, routines, prefix, to_files=False, header=True, empty=True):
         """Writes all the source code files for the given routines.
@@ -806,7 +834,8 @@ class FCodeGen(CodeGen):
     def _call_printer(self, routine):
         declarations = []
         code_lines = []
-        for result in routine.result_variables:
+        variables = routine.result_variables + list(routine.statements)
+        for result in variables:
             expr = None
             if isinstance(result, Result):
                 assign_to = routine.name
@@ -815,8 +844,10 @@ class FCodeGen(CodeGen):
                 assign_to = result.result_var
                 expr      = result.expr
             elif isinstance(result, Assign):
-                assign_to = Assign.lhs.name
-                expr      = Assign.rhs
+                assign_to = result.lhs
+                expr      = result.rhs
+            else:
+                raise ValueError("Unknown variable : %s" % result)
 
             constants, not_fortran, f_expr = fcode(expr,
                 assign_to=assign_to, source_format='free', human=False)
@@ -1097,7 +1128,7 @@ def get_code_generator(language, project, standard=None):
 
 def codegen(name_expr, language, prefix=None, project="project",
             to_files=False, header=True, empty=True, argument_sequence=None,
-            global_vars=None, standard=None, local_vars=None):
+            global_vars=None, standard=None, local_vars=None, statements=None):
     """Generate source code for expressions in a given language.
 
     Parameters
@@ -1143,6 +1174,9 @@ def codegen(name_expr, language, prefix=None, project="project",
         Redundant arguments are used without warning.  If omitted,
         arguments will be ordered alphabetically, but with all input
         aguments first, and then output or in-out arguments.
+
+    statements: list of Statements
+        List of statements (for example Assign of local variables)
 
     global_vars : iterable, optional
         Sequence of global variables used by the routine.  Variables
@@ -1237,8 +1271,7 @@ def codegen(name_expr, language, prefix=None, project="project",
     routines = []
     print ("-------")
     for name, expr in name_expr:
-        print (name, expr)
-        routines.append(code_gen.routine(name, expr, argument_sequence,
+        routines.append(code_gen.routine(name, expr, argument_sequence, statements,
                                          global_vars, local_vars=local_vars))
     print ("-------")
 

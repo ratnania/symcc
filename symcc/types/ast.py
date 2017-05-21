@@ -128,6 +128,10 @@ class Assign(Basic):
     def rhs(self):
         return self._args[1]
 
+    @property
+    def expr(self):
+        return self.rhs
+
 
 # The following are defined to be sympy approved nodes. If there is something
 # smaller that could be used, that would be preferable. We only use them as
