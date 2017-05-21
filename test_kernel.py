@@ -9,46 +9,6 @@ from sympy.tensor import Idx, Indexed, IndexedBase
 from sympy.core.sympify import sympify
 
 
-# ...
-def prelude_testfunction(dim):
-    n1 = Symbol('n1', integer=True)
-    n2 = Symbol('n2', integer=True)
-    n3 = Symbol('n3', integer=True)
-
-    g1 = Idx('g1', n1)
-    g2 = Idx('g2', n2)
-    g3 = Idx('g3', n3)
-
-    arr_Ni1_0 = IndexedBase('arr_Ni1_0')
-    arr_Ni2_0 = IndexedBase('arr_Ni2_0')
-    arr_Ni3_0 = IndexedBase('arr_Ni3_0')
-
-    arr_Ni1_s = IndexedBase('arr_Ni1_s')
-    arr_Ni2_s = IndexedBase('arr_Ni2_s')
-    arr_Ni3_s = IndexedBase('arr_Ni3_s')
-
-    Ni_0  = Symbol('Ni_0')
-    Ni_u  = Symbol('Ni_u')
-    Ni_v  = Symbol('Ni_v')
-    Ni_w  = Symbol('Ni_w')
-
-    body = []
-
-    if dim == 1:
-        body.append(Assign(Ni_0, arr_Ni1_0[g1]))
-        body.append(Assign(Ni_u, arr_Ni1_s[g1]))
-    if dim == 2:
-        body.append(Assign(Ni_0, arr_Ni1_0[g1] * arr_Ni2_0[g2]))
-        body.append(Assign(Ni_u, arr_Ni1_s[g1] * arr_Ni2_0[g2]))
-        body.append(Assign(Ni_v, arr_Ni1_0[g1] * arr_Ni2_s[g2]))
-    if dim == 3:
-        body.append(Assign(Ni_0, arr_Ni1_0[g1] * arr_Ni2_0[g2] * arr_Ni3_0[g3]))
-        body.append(Assign(Ni_u, arr_Ni1_s[g1] * arr_Ni2_0[g2] * arr_Ni3_0[g3]))
-        body.append(Assign(Ni_v, arr_Ni1_0[g1] * arr_Ni2_s[g2] * arr_Ni3_0[g3]))
-        body.append(Assign(Ni_w, arr_Ni1_0[g1] * arr_Ni2_0[g2] * arr_Ni3_s[g3]))
-
-    return body
-# ...
 
 # ...
 def prelude_trialfunction(dim):
@@ -147,11 +107,11 @@ class Basic(object):
 
         self._local_vars = local_vars
         if local_vars is None:
-            self._local_vars = set([])
+            self._local_vars = []
 
         self._args = args
         if args is None:
-            self._args = set([])
+            self._args = []
 
     @property
     def body(self):
@@ -184,15 +144,15 @@ class Pullback(Basic):
         Nj_y  = Symbol('Nj_y')
         Nj_z  = Symbol('Nj_z')
 
-        body = set([Assign(Nj_x,Nj_u), Assign(Nj_y,Nj_v), Assign(Nj_z,Nj_w)][:dim])
+        body = [Assign(Nj_x,Nj_u), Assign(Nj_y,Nj_v), Assign(Nj_z,Nj_w)][:dim]
 
-        local_vars  = set([])
+        local_vars  = []
 
-        local_vars = local_vars.union(set([Ni_u, Ni_v, Ni_w][:dim]))
-        local_vars = local_vars.union(set([Ni_x, Ni_y, Ni_z][:dim]))
+        local_vars += [Ni_u, Ni_v, Ni_w][:dim]
+        local_vars += [Ni_x, Ni_y, Ni_z][:dim]
 
-        local_vars = local_vars.union(set([Nj_u, Nj_v, Nj_w][:dim]))
-        local_vars = local_vars.union(set([Nj_x, Nj_y, Nj_z][:dim]))
+        local_vars += [Nj_u, Nj_v, Nj_w][:dim]
+        local_vars += [Nj_x, Nj_y, Nj_z][:dim]
 
         super(Pullback, self).__init__(body, local_vars=local_vars)
 
@@ -206,8 +166,8 @@ class Geometry(Basic):
 
         arr_wvol = IndexedBase('arr_wvol')
 
-        args = set([arr_wvol])
-        args = args.union(set([arr_x, arr_y, arr_z][:dim]))
+        args  = [arr_wvol]
+        args += [arr_x, arr_y, arr_z][:dim]
         # ...
 
         # ...
@@ -225,48 +185,97 @@ class Geometry(Basic):
 
         wvol  = Symbol('wvol')
 
-        local_vars  = set([wvol])
+        local_vars  = [wvol]
 
-        local_vars = local_vars.union(set([n1, n2, n3][:dim]))
-        local_vars = local_vars.union(set([g1, g2, g3][:dim]))
-        local_vars = local_vars.union(set([ x,  y,  z][:dim]))
+        local_vars += [n1, n2, n3][:dim]
+        local_vars += [g1, g2, g3][:dim]
+        local_vars += [ x,  y,  z][:dim]
         # ...
 
         # ...
-        body = set([])
+        body = []
         if dim == 1:
-            body.add(Assign(x, arr_x[g1]))
+            body.append(Assign(x, arr_x[g1]))
 
-            body.add(Assign(wvol, arr_wvol[g1]))
+            body.append(Assign(wvol, arr_wvol[g1]))
         if dim == 2:
-            body.add(Assign(Symbol('g'), sympify('(g2-1)*n1 + g1')))
+            body.append(Assign(Symbol('g'), sympify('(g2-1)*n1 + g1')))
 
             g = Idx('g', n1 * n2)
-            body.add(Assign(x, arr_x[g]))
-            body.add(Assign(y, arr_y[g]))
+            body.append(Assign(x, arr_x[g]))
+            body.append(Assign(y, arr_y[g]))
 
-            body.add(Assign(wvol, arr_wvol[g]))
+            body.append(Assign(wvol, arr_wvol[g]))
         if dim == 3:
-            body.add(Assign(Symbol('g'), sympify('(g3-1)*n2*n1 + (g2-1)*n1 + g1')))
+            body.append(Assign(Symbol('g'), sympify('(g3-1)*n2*n1 + (g2-1)*n1 + g1')))
 
             g = Idx('g', n1 * n2 * n3)
-            body.add(Assign(x, arr_x[g]))
-            body.add(Assign(y, arr_y[g]))
-            body.add(Assign(z, arr_z[g]))
+            body.append(Assign(x, arr_x[g]))
+            body.append(Assign(y, arr_y[g]))
+            body.append(Assign(z, arr_z[g]))
 
-            body.add(Assign(wvol, arr_wvol[g]))
+            body.append(Assign(wvol, arr_wvol[g]))
         # ...
 
         super(Geometry, self).__init__(body, local_vars=local_vars, args=args)
 
 
-# ...
-def prelude_geometry(dim):
-    body = []
+class TestFunction(Basic):
+    def __init__(self, dim):
+        # ...
+        arr_Ni1_0 = IndexedBase('arr_Ni1_0')
+        arr_Ni2_0 = IndexedBase('arr_Ni2_0')
+        arr_Ni3_0 = IndexedBase('arr_Ni3_0')
 
+        arr_Ni1_s = IndexedBase('arr_Ni1_s')
+        arr_Ni2_s = IndexedBase('arr_Ni2_s')
+        arr_Ni3_s = IndexedBase('arr_Ni3_s')
 
-    return body
-# ...
+        args  = []
+        args += [arr_Ni1_0, arr_Ni2_0, arr_Ni3_0][:dim]
+        args += [arr_Ni1_s, arr_Ni2_s, arr_Ni3_s][:dim]
+        # ...
+
+        # ...
+        n1 = Symbol('n1', integer=True)
+        n2 = Symbol('n2', integer=True)
+        n3 = Symbol('n3', integer=True)
+
+        g1 = Idx('g1', n1)
+        g2 = Idx('g2', n2)
+        g3 = Idx('g3', n3)
+
+        Ni_0  = Symbol('Ni_0')
+        Ni_u  = Symbol('Ni_u')
+        Ni_v  = Symbol('Ni_v')
+        Ni_w  = Symbol('Ni_w')
+
+        local_vars  = [Ni_0]
+
+        local_vars += [n1, n2, n3][:dim]
+        local_vars += [g1, g2, g3][:dim]
+        local_vars += [Ni_u, Ni_v, Ni_w][:dim]
+        # ...
+
+        # ...
+        body = []
+
+        if dim == 1:
+            body.append(Assign(Ni_0, arr_Ni1_0[g1]))
+            body.append(Assign(Ni_u, arr_Ni1_s[g1]))
+        if dim == 2:
+            body.append(Assign(Ni_0, arr_Ni1_0[g1] * arr_Ni2_0[g2]))
+            body.append(Assign(Ni_u, arr_Ni1_s[g1] * arr_Ni2_0[g2]))
+            body.append(Assign(Ni_v, arr_Ni1_0[g1] * arr_Ni2_s[g2]))
+        if dim == 3:
+            body.append(Assign(Ni_0, arr_Ni1_0[g1] * arr_Ni2_0[g2] * arr_Ni3_0[g3]))
+            body.append(Assign(Ni_u, arr_Ni1_s[g1] * arr_Ni2_0[g2] * arr_Ni3_0[g3]))
+            body.append(Assign(Ni_v, arr_Ni1_0[g1] * arr_Ni2_s[g2] * arr_Ni3_0[g3]))
+            body.append(Assign(Ni_w, arr_Ni1_0[g1] * arr_Ni2_0[g2] * arr_Ni3_s[g3]))
+        # ...
+
+        super(TestFunction, self).__init__(body, local_vars=local_vars, args=args)
+
 
 ########################################
 if __name__ == "__main__":
@@ -280,21 +289,21 @@ if __name__ == "__main__":
     expr = sympify("Ni_x*Nj_x")
 
     stmts  = []
-    stmts += [Pullback(dim), Geometry(dim)]
+    stmts += [Geometry(dim), TestFunction(dim), Pullback(dim)]
 
-    body       = set([])
-    local_vars = set([])
-    args       = set([])
+    body       = []
+    local_vars = []
+    args       = []
 
     for stmt in stmts:
         if isinstance(stmt, Basic):
-            body = body.union(stmt.body)
-            local_vars = local_vars.union(stmt.local_vars)
-            args = args.union(stmt.args)
+            body       += stmt.body
+            local_vars += stmt.local_vars
+            args       += stmt.args
         elif isinstance(stmt, For):
-            body = body.union(stmt.body)
-            local_vars = local_vars.union(stmt.target)
-            args = args.union(stmt.iterable.stop)
+            body       += stmt.body
+            local_vars += stmt.target
+            args       += stmt.iterable.stop
         else:
             raise ValueError("Unknown statement : %s" % stmt)
 
@@ -311,8 +320,8 @@ if __name__ == "__main__":
 
     [(f_name, f_code), header] = codegen(("kernel", body), "F95", \
                                          header=False, empty=True, \
-                                         argument_sequence=args, \
-                                         local_vars=local_vars)
+                                         argument_sequence=set(args), \
+                                         local_vars=set(local_vars))
 
     print(f_code)
 
