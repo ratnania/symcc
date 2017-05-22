@@ -33,3 +33,7 @@ here, and then eventually merged back into SymPy proper as a top-level module.
 I don't expect everything added to make the cut (Templating engines probably
 won't), but ideally most of the changes will eventually find their way back
 into SymPy.
+
+## History
+
+This code was originaly written by *jcrist*. After folking his code, I added the codegen part and allowed for *For* statement to have non values integer for the *stop* attribut.
