@@ -5,6 +5,9 @@ from sympy import Symbol, sympify
 from symcc.dsl.utilities import grad, d_var, inner, outer, cross, dot
 from symcc.dsl.core import Basic, Parser
 
+__all__ = ["ValeParser"]
+
+
 # Global variable namespace
 namespace = {}
 stack = {}

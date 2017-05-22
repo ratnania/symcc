@@ -5,6 +5,8 @@ from sympy import Symbol, sympify
 from symcc.dsl.utilities import grad, d_var, inner, outer, cross, dot
 from textx.metamodel import metamodel_from_str
 
+__all__ = ["Basic", "Parser"]
+
 # Global variable namespace
 namespace = {}
 stack = {}

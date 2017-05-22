@@ -3,6 +3,9 @@
 from sympy import Symbol, sympify, Matrix
 from sympy.core.singleton import S
 
+__all__ = ["grad", "d_var", "dot", "cross", "outer", "inner"]
+
+
 # ...
 def grad(expr, dim):
     """

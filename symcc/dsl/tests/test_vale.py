@@ -1,6 +1,12 @@
 # coding: utf-8
 
+from symcc.printers import fcode
+from symcc.utilities.codegen import codegen
+from symcc.dsl.codegen import ValeCodegen
 from symcc.dsl.vale import ValeParser
+
+from sympy import S
+from sympy.core.sympify import sympify
 
 
 def test_dsl():
@@ -40,6 +46,15 @@ def test_dsl():
     a1 = get_by_name(ast, "a1")
     # ...
 
+
+def test_vale():
+    dim = 2
+
+    expr = sympify("Ni_x*Nj_x")
+    kernel = ValeCodegen(expr, dim, name="kernel", trial=True)
+    print (kernel.doprint("F95"))
+
 ######################################
 if __name__ == "__main__":
-    test_dsl()
+#    test_dsl()
+    test_vale()
