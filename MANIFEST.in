@@ -1,0 +1,4 @@
+include README.md
+include symcc/dsl/grammar/*.tx
+
+recursive-include symcc *.tx
