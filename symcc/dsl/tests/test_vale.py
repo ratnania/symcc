@@ -5,18 +5,12 @@ from symcc.dsl.vale import ValeParser
 
 def test_dsl():
 
-    # ... read a Vale code
-    filename = "vale/test.vl"
-    f = open(filename)
-    instructions = f.read()
-    instructions.replace("\n", "")
-    f.close()
+    # ... creates an instance of Vale parser
+    vale = ValeParser()
     # ...
 
-    parser = ValeParser()
-
     # ... parse the Vale code
-    ast = parser.model.model_from_str(instructions)
+    ast = vale.parse_from_file("vale/test.vl")
     # ...
 
     # ... for every token, we print its name and type

@@ -15,9 +15,6 @@ class Basic(object):
         self.declarations = declarations
         self.statements   = statements
 
-    @classmethod
-    def parse(cls, instructions):
-        print("BONJOUR")
 
 class Parser(object):
     def __init__(self, grammar=None, filename=None, \
@@ -45,4 +42,21 @@ class Parser(object):
             self.model = metamodel_from_str(_grammar)
         else:
             self.model = metamodel_from_str(_grammar, classes=classes)
+        # ...
+
+    def parse(self, instructions):
+        # ... parse the DSL code
+        return self.model.model_from_str(instructions)
+        # ...
+
+    def parse_from_file(self, filename):
+        # ... read a DSL code
+        f = open(filename)
+        instructions = f.read()
+        instructions.replace("\n", "")
+        f.close()
+        # ...
+
+        # ... parse the DSL code
+        return self.parse(instructions)
         # ...
