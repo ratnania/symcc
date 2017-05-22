@@ -10,25 +10,6 @@ from sympy.core.sympify import sympify
 
 
 
-# ...
-def kernel(dim, expr=None):
-    main = None
-    contribution = Symbol("contribution")
-
-    body = []
-
-#    if expr is not None:
-#        body += [build_weak_formulation(contribution, expr)]
-
-
-
-    main = body
-    return main
-# ...
-
-
-
-
 class Basic(object):
     def __init__(self, body, local_vars=None, args=None):
 
@@ -56,7 +37,7 @@ class Basic(object):
 
 
 class Pullback(Basic):
-    def __init__(self, dim):
+    def __init__(self, dim, trial=False):
         Ni_u  = Symbol('Ni_u')
         Ni_v  = Symbol('Ni_v')
         Ni_w  = Symbol('Ni_w')
@@ -65,25 +46,28 @@ class Pullback(Basic):
         Ni_y  = Symbol('Ni_y')
         Ni_z  = Symbol('Ni_z')
 
-        Nj_u  = Symbol('Nj_u')
-        Nj_v  = Symbol('Nj_v')
-        Nj_w  = Symbol('Nj_w')
+        if trial:
+            Nj_u  = Symbol('Nj_u')
+            Nj_v  = Symbol('Nj_v')
+            Nj_w  = Symbol('Nj_w')
 
-        Nj_x  = Symbol('Nj_x')
-        Nj_y  = Symbol('Nj_y')
-        Nj_z  = Symbol('Nj_z')
+            Nj_x  = Symbol('Nj_x')
+            Nj_y  = Symbol('Nj_y')
+            Nj_z  = Symbol('Nj_z')
 
         body  = []
         body += [Assign(Ni_x,Ni_u), Assign(Ni_y,Ni_v), Assign(Ni_z,Ni_w)][:dim]
-        body += [Assign(Nj_x,Nj_u), Assign(Nj_y,Nj_v), Assign(Nj_z,Nj_w)][:dim]
+        if trial:
+            body += [Assign(Nj_x,Nj_u), Assign(Nj_y,Nj_v), Assign(Nj_z,Nj_w)][:dim]
 
         local_vars  = []
 
         local_vars += [Ni_u, Ni_v, Ni_w][:dim]
         local_vars += [Ni_x, Ni_y, Ni_z][:dim]
 
-        local_vars += [Nj_u, Nj_v, Nj_w][:dim]
-        local_vars += [Nj_x, Nj_y, Nj_z][:dim]
+        if trial:
+            local_vars += [Nj_u, Nj_v, Nj_w][:dim]
+            local_vars += [Nj_x, Nj_y, Nj_z][:dim]
 
         super(Pullback, self).__init__(body, local_vars=local_vars)
 
@@ -273,6 +257,70 @@ class Formulation(Basic):
         super(Formulation, self).__init__(body, local_vars=local_vars)
 
 
+class KernelCodeGen(Basic):
+    def __init__(self, expr, dim, name, trial=False):
+        self._name = name
+
+        stmts  = []
+        stmts += [Geometry(dim), \
+                  TestFunction(dim)]
+        if trial:
+            stmts += [TrialFunction(dim)]
+
+        stmts += [Pullback(dim, trial=trial), \
+                  Formulation(expr)]
+
+        body       = []
+        local_vars = []
+        args       = []
+
+        for stmt in stmts:
+            if isinstance(stmt, Basic):
+                body       += stmt.body
+                local_vars += stmt.local_vars
+                args       += stmt.args
+            elif isinstance(stmt, For):
+                body       += stmt.body
+                local_vars += stmt.target
+                args       += stmt.iterable.stop
+            else:
+                raise ValueError("Unknown statement : %s" % stmt)
+
+        contribution = Symbol("contribution")
+
+        g1 = Symbol('g1', integer=True)
+        n1 = Symbol('n1', integer=True)
+
+        g2 = Symbol('g2', integer=True)
+        n2 = Symbol('n2', integer=True)
+
+        g3 = Symbol('g3', integer=True)
+        n3 = Symbol('n3', integer=True)
+
+        if dim >= 3:
+            body = [For(g3, (1, n3, 1), body)]
+        if dim >= 2:
+            body = [For(g2, (1, n2, 1), body)]
+        body  = [Assign(contribution, 0.), For(g1, (1, n1, 1), body)]
+
+        super(KernelCodeGen, self).__init__(body, \
+                                            local_vars=local_vars, \
+                                            args=args)
+
+    @property
+    def name(self):
+        return self._name
+
+    def doprint(self, language):
+        [(f_name, f_code), header] = codegen((self.name, self.body), language, \
+                                             header=False, empty=True, \
+                                             argument_sequence=set(self.args), \
+                                             local_vars=set(self.local_vars))
+
+        return f_code
+
+
+
 ########################################
 if __name__ == "__main__":
     from symcc.printers import fcode # not working with Assign
@@ -283,49 +331,6 @@ if __name__ == "__main__":
     dim = 2
 
     expr = sympify("Ni_x*Nj_x")
+    kernel = KernelCodeGen(expr, dim, name="kernel", trial=True)
+    print (kernel.doprint("F95"))
 
-    stmts  = []
-    stmts += [Geometry(dim), \
-              TestFunction(dim), TrialFunction(dim), \
-              Pullback(dim), \
-              Formulation(expr)]
-
-    body       = []
-    local_vars = []
-    args       = []
-
-    for stmt in stmts:
-        if isinstance(stmt, Basic):
-            body       += stmt.body
-            local_vars += stmt.local_vars
-            args       += stmt.args
-        elif isinstance(stmt, For):
-            body       += stmt.body
-            local_vars += stmt.target
-            args       += stmt.iterable.stop
-        else:
-            raise ValueError("Unknown statement : %s" % stmt)
-
-    contribution = Symbol("contribution")
-
-    g1 = Symbol('g1', integer=True)
-    n1 = Symbol('n1', integer=True)
-
-    g2 = Symbol('g2', integer=True)
-    n2 = Symbol('n2', integer=True)
-
-    g3 = Symbol('g3', integer=True)
-    n3 = Symbol('n3', integer=True)
-
-    if dim >= 3:
-        body = [For(g3, (1, n3, 1), body)]
-    if dim >= 2:
-        body = [For(g2, (1, n2, 1), body)]
-    body  = [Assign(contribution, 0.), For(g1, (1, n1, 1), body)]
-
-    [(f_name, f_code), header] = codegen(("kernel", body), "F95", \
-                                         header=False, empty=True, \
-                                         argument_sequence=set(args), \
-                                         local_vars=set(local_vars))
-
-    print(f_code)
