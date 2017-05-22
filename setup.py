@@ -37,7 +37,6 @@ packages=[  'symcc' \
 
 package_dir={  'symcc':                'symcc' \
               ,'symcc.dsl':            'symcc/dsl' \
-              ,'symcc.dsl.gramar':     'symcc/dsl/grammar' \
               ,'symcc.printers':       'symcc/printers' \
               ,'symcc.types':          'symcc/types' \
               ,'symcc.utilities':      'symcc/utilities' \
