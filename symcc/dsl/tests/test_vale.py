@@ -8,6 +8,14 @@ from sympy import S
 from sympy.core.sympify import sympify
 
 
+def test_vale():
+    dim = 2
+
+    expr = sympify("Ni_x*Nj_x")
+    kernel = ValeCodegen(expr, dim, name="kernel", trial=True)
+    print (kernel.doprint("F95"))
+
+
 def test_dsl():
 
     # ... creates an instance of Vale parser
@@ -45,15 +53,13 @@ def test_dsl():
     a1 = get_by_name(ast, "a1")
     # ...
 
-
-def test_vale():
+    # ... TODO get dim from domain
     dim = 2
-
-    expr = sympify("Ni_x*Nj_x")
-    kernel = ValeCodegen(expr, dim, name="kernel", trial=True)
+    kernel = ValeCodegen(l1.to_sympy(), dim, name="kernel", trial=True)
     print (kernel.doprint("F95"))
+    # ...
 
 ######################################
 if __name__ == "__main__":
-#    test_dsl()
-    test_vale()
+    test_dsl()
+#    test_vale()
