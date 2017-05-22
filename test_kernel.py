@@ -280,11 +280,9 @@ if __name__ == "__main__":
     from symcc.types.ast import Assign
     from sympy import S
 
-    dim = 3
+    dim = 2
 
     expr = sympify("Ni_x*Nj_x")
-#    if expr is not None:
-#        body += [build_weak_formulation(contribution, expr)]
 
     stmts  = []
     stmts += [Geometry(dim), \
@@ -323,11 +321,7 @@ if __name__ == "__main__":
         body = [For(g3, (1, n3, 1), body)]
     if dim >= 2:
         body = [For(g2, (1, n2, 1), body)]
-    body  = For(g1, (1, n1, 1), body)
-
-#    body  = [Assign(contribution, S.Zero), For(g1, (1, n1, 1), body)]
-
-    print(">>>> local_vars : " + str(set(local_vars)))
+    body  = [Assign(contribution, 0.), For(g1, (1, n1, 1), body)]
 
     [(f_name, f_code), header] = codegen(("kernel", body), "F95", \
                                          header=False, empty=True, \

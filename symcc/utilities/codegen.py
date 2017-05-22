@@ -835,7 +835,8 @@ class FCodeGen(CodeGen):
     def _call_printer(self, routine):
         declarations = []
         code_lines = []
-        variables = list(set(routine.result_variables + list(routine.statements)))
+        variables = list(routine.statements) + routine.result_variables
+#        variables = list(set(routine.result_variables + list(routine.statements)))
         for result in variables:
             expr = None
             skip = False
@@ -864,8 +865,11 @@ class FCodeGen(CodeGen):
                 if isinstance(expr, For):
                     f_expr = fcode(expr, source_format='free', human=False)
                 else:
-                    constants, not_fortran, f_expr = fcode(expr,
-                        assign_to=assign_to, source_format='free', human=False)
+                    if isinstance(result, Assign):
+                        f_expr = fcode(expr, assign_to=assign_to, source_format='free', human=False)
+                    else:
+                        constants, not_fortran, f_expr = fcode(expr,
+                            assign_to=assign_to, source_format='free', human=False)
 
                 for obj, v in sorted(constants, key=str):
                     t = get_default_datatype(obj)
