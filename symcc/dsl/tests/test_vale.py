@@ -1,7 +1,6 @@
 # coding: utf-8
 
 from symcc.printers import fcode
-from symcc.utilities.codegen import codegen
 from symcc.dsl.codegen import ValeCodegen
 from symcc.dsl.vale import ValeParser
 

@@ -1,4 +1,11 @@
 # coding: utf-8
+from symcc.types.ast import For, Assign
+from symcc.utilities.codegen import codegen
+
+from sympy.core.symbol import Symbol
+from sympy.abc import x,y,i
+from sympy.tensor import Idx, Indexed, IndexedBase
+from sympy.core.sympify import sympify
 
 __all__ = ["ValeCodegen"]
 
@@ -297,7 +304,7 @@ class ValeCodegen(Codegen):
             body = [For(g2, (1, n2, 1), body)]
         body  = [Assign(contribution, 0.), For(g1, (1, n1, 1), body)]
 
-        super(KernelCodeGen, self).__init__(body, \
+        super(ValeCodegen, self).__init__(body, \
                                             local_vars=local_vars, \
                                             args=args)
 
