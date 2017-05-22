@@ -1,16 +1,20 @@
 # coding: utf-8
 
 from sympy import Symbol, sympify
+
 from symcc.dsl.utilities import grad, d_var, inner, outer, cross, dot
+from symcc.dsl.core import Basic, Parser
 
 # Global variable namespace
 namespace = {}
 stack = {}
 
 
-class Vale(object):
+class Vale(Basic):
     def __init__(self, **kwargs):
-        self.declarations = kwargs.pop('declarations')
+        declarations = kwargs.pop('declarations')
+
+        super(Vale, self).__init__(declarations=declarations)
 
 
 class Domain(object):
@@ -241,3 +245,17 @@ class Operand(ExpressionElement):
         else:
             raise Exception('Unknown variable "{}" at position {}'
                             .format(op, self._tx_position))
+
+# User friendly parser
+
+class ValeParser(Parser):
+    def __init__(self):
+        classes = [Vale, \
+                   Expression, Term, Operand, \
+                   FactorSigned, FactorUnary, FactorBinary, \
+                   LinearForm, BilinearForm, \
+                   Domain, Space, Field, Function, Real \
+                   ]
+
+        super(ValeParser, self).__init__(filename = "grammar/vale.tx", \
+                                         classes=classes)
