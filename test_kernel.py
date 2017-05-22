@@ -1,8 +1,8 @@
 # coding: utf-8
 from sympy.core.symbol import Symbol
-from sympy import Eq as Assign
+#from sympy import Eq as Assign
 from symcc.types.ast import For
-#from symcc.types.ast import Assign
+from symcc.types.ast import Assign
 from sympy.abc import x,y,i
 from sympy.tensor import Idx, Indexed, IndexedBase
 
@@ -252,9 +252,10 @@ class Formulation(Basic):
         wvol = Symbol("wvol")
 
         body       = [Assign(contribution, contribution + expr * wvol)]
-        local_vars = [contribution]
+        local_vars = []
+        args       = [contribution]
 
-        super(Formulation, self).__init__(body, local_vars=local_vars)
+        super(Formulation, self).__init__(body, local_vars=local_vars, args=args)
 
 
 class KernelCodeGen(Basic):
