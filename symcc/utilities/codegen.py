@@ -839,8 +839,9 @@ class FCodeGen(CodeGen):
     def _call_printer(self, routine):
         declarations = []
         code_lines = []
+
         variables = list(routine.statements) + routine.result_variables
-#        variables = list(set(routine.result_variables + list(routine.statements)))
+
         for result in variables:
             expr = None
             skip = False
@@ -861,6 +862,9 @@ class FCodeGen(CodeGen):
             else:
                 raise ValueError("Unknown variable : %s" % result)
 
+
+            print(">>>> expr      " + str(expr))
+            print(">>>> assign_to " + str(assign_to))
 
             if not skip:
                 constants   = set([])
@@ -1006,6 +1010,32 @@ class LuaCodeGen(CodeGen):
                     # it doesn't become an input.
                     symbols.remove(symbol)
 
+            elif isinstance(expr, Assign):
+                out_arg = expr.lhs
+                expr = expr.rhs
+                if isinstance(out_arg, Indexed):
+                    dims = tuple([ (S.Zero, dim - 1) for dim in out_arg.shape])
+                    symbol = out_arg.base.label
+                elif isinstance(out_arg, Symbol):
+                    dims = []
+                    symbol = out_arg
+                elif isinstance(out_arg, MatrixSymbol):
+                    dims = tuple([ (S.Zero, dim - 1) for dim in out_arg.shape])
+                    symbol = out_arg
+                else:
+                    raise CodeGenError("Only Indexed, Symbol, or MatrixSymbol "
+                                       "can define output arguments.")
+
+                if (expr.has(symbol)) or (not(symbol in local_vars)):
+                    output_args.append(
+                        InOutArgument(symbol, out_arg, out_arg + S.Zero, dimensions=dims))
+
+                # avoid duplicate arguments
+                if not(symbol in local_vars):
+                    symbols.remove(symbol)
+
+                stmts.append(Assign(out_arg, expr))
+
             else:
                 # we have no name for this output
                 return_vals.append(Result(expr, name='out%d' % (i+1)))
@@ -1050,7 +1080,6 @@ class LuaCodeGen(CodeGen):
 
         return Routine(name, arg_list, return_vals, stmts, local_vars, global_vars)
 
-
     def _get_header(self):
         """Writes a common header for the generated files."""
         code_lines = []
@@ -1080,10 +1109,10 @@ class LuaCodeGen(CodeGen):
         for arg in routine.arguments:
             name = lua_code(arg.name)
             if arg.dimensions or isinstance(arg, ResultBase):
-                type_args.append(("*%s" % name, arg.get_datatype('Lua')))
+                type_args.append(("%s" % name, arg.get_datatype('Lua')))
             else:
                 type_args.append((name, arg.get_datatype('Lua')))
-        arguments = ", ".join([ "%s %s" % t for t in type_args])
+        arguments = ", ".join([ "%s" % t[0] for t in type_args])
         return "function %s(%s)%s" % (routine.name, arguments, rstype)
 
     def _preprocessor_statements(self, prefix):
@@ -1104,7 +1133,6 @@ class LuaCodeGen(CodeGen):
         return []
 
     def _declare_locals(self, routine):
-        # loop variables are declared in loop statement
         return []
 
     def _call_printer(self, routine):
@@ -1121,14 +1149,25 @@ class LuaCodeGen(CodeGen):
             if isinstance(arg, ResultBase) and not arg.dimensions:
                 dereference.append(arg.name)
 
-        for i, result in enumerate(routine.results):
+        variables = list(routine.statements) + routine.results
+
+        for i, result in enumerate(variables):
+            expr      = None
+            assign_to = None
             if isinstance(result, Result):
                 assign_to = result.result_var
+                expr      = result.expr
                 returns.append(str(result.result_var))
+                print("++++ of type Result")
+            elif isinstance(result, Assign):
+                assign_to = result.lhs
+                expr      = result.rhs
             else:
-                raise CodeGenError("unexpected object in Routine results")
+                raise ValueError("Unknown variable : %s" % result)
 
-            lua_expr = lua_code(result.expr, assign_to=assign_to, human=False)
+            print(">>>> expr      " + str(expr))
+            print(">>>> assign_to " + str(assign_to))
+            lua_expr = lua_code(expr, assign_to=assign_to, human=False)
 
             code_lines.append("local %s\n" % lua_expr);
 

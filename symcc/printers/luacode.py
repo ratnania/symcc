@@ -11,15 +11,6 @@ complete source code files.
 
 # Possible Improvement
 #
-# * make sure we follow Lua Style Guidelines_
-# * make use of pattern matching
-# * better support for reference
-# * generate generic code and use trait to make sure they have specific methods
-# * use crates_ to get more math support
-#     - num_
-#         + BigInt_, BigUint_
-#         + Complex_
-#         + Rational64_, Rational32_, BigRational_
 #
 
 from __future__ import print_function, division
@@ -34,20 +25,8 @@ from symcc.types.ast import (Assign, Result, InArgument,
         OutArgument, InOutArgument, Variable)
 
 
-# Lua's methods for integer and float can be found at here :
-#
-# * `Lua - Primitive Type f64 <https://doc.lua-lang.org/std/primitive.f64.html>`_
-# * `Lua - Primitive Type i64 <https://doc.lua-lang.org/std/primitive.i64.html>`_
-#
-# Function Style :
-#
-# 1. args[0].func(args[1:]), method with arguments
-# 2. args[0].func(), method without arguments
-# 3. args[1].func(), method without arguments (e.g. (e, x) => x.exp())
-# 4. func(args), function with arguments
+__all__ = ["LuaCodePrinter", "lua_code"]
 
-# dictionary mapping sympy function to (argument_conditions, Lua_function).
-# Used in LuaCodePrinter._print_Function(self)
 
 # f64 method in Lua
 known_functions = {
@@ -458,11 +437,7 @@ class LuaCodePrinter(CodePrinter):
     def _print_Symbol(self, expr):
 
         name = super(LuaCodePrinter, self)._print_Symbol(expr)
-
-        if expr in self._dereference:
-            return '(*%s)' % name
-        else:
-            return name
+        return name
 
     # ============ Elements ============ #
 
@@ -512,12 +487,12 @@ class LuaCodePrinter(CodePrinter):
     def _print_OutArgument(self, expr):
         dtype = self._print(expr.dtype)
         arg = self._print(expr.name)
-        return '{0} *{1}'.format(dtype, arg)
+        return '{0} {1}'.format(dtype, arg)
 
     def _print_InOutArgument(self, expr):
         dtype = self._print(expr.dtype)
         arg = self._print(expr.name)
-        return '{0} *{1}'.format(dtype, arg)
+        return '{0} {1}'.format(dtype, arg)
 
     def _print_Return(self, expr):
         return 'return {0}'.format(self._print(expr.expr))
