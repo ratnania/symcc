@@ -354,7 +354,7 @@ class Routine(object):
 #                symbols.update(r.expr.free_symbols)
 
         for stmt in statements:
-            if not isinstance(stmt, Assign):
+            if not isinstance(stmt, (Assign, Equality)):
                 raise ValueError("Unknown Routine statement: %s" % stmt)
 #            symbols.update(stmt.expr.free_symbols)
 #            symbols.update(stmt.expr.free_symbols - set(arguments))
@@ -1026,15 +1026,24 @@ class LuaCodeGen(CodeGen):
                     raise CodeGenError("Only Indexed, Symbol, or MatrixSymbol "
                                        "can define output arguments.")
 
+                print(">>>> expr    " + str(expr) + \
+                      "     symbol  " + str(symbol) + \
+                      "     out_arg " + str(out_arg))
+                if out_arg in argument_sequence:
+                    print("XXXXXXXXXXXX")
+                    #return_vals.append(Result(expr, name=out_arg))
+                    return_vals.append(Result(expr, name=symbol, result_var=out_arg))
+                else:
+                    stmts.append(Assign(out_arg, expr))
+
                 if (expr.has(symbol)) or (not(symbol in local_vars)):
                     output_args.append(
                         InOutArgument(symbol, out_arg, out_arg + S.Zero, dimensions=dims))
 
+
                 # avoid duplicate arguments
                 if not(symbol in local_vars):
                     symbols.remove(symbol)
-
-                stmts.append(Assign(out_arg, expr))
 
             else:
                 # we have no name for this output
@@ -1162,7 +1171,6 @@ class LuaCodeGen(CodeGen):
                 assign_to = result.result_var
                 expr      = result.expr
                 returns.append(str(result.result_var))
-                print("++++ of type Result")
             elif isinstance(result, Assign):
                 assign_to = result.lhs
                 expr      = result.rhs
@@ -1173,10 +1181,17 @@ class LuaCodeGen(CodeGen):
             print(">>>> assign_to " + str(assign_to))
             lua_expr = lua_code(expr, assign_to=assign_to, human=False)
 
-            code_lines.append("local %s\n" % lua_expr);
+            if assign_to in routine.results:
+                code_lines.append("%s\n" % lua_expr);
+            else:
+                code_lines.append("local %s\n" % lua_expr);
 
+        print("///// " + str(returns))
         if len(returns) > 1:
-            returns = ['(' + ', '.join(returns) + ')']
+            returns = ['return ' + ', '.join(returns)]
+        elif len(returns) == 1:
+            returns = ['return ' + str(returns[0]) ]
+        print("\\\\\\\\\\ " + str(returns))
 
         returns.append('\n')
 
