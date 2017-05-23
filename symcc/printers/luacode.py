@@ -157,7 +157,10 @@ known_functions = {
 # These are the core reserved words in the Lua language. Taken from:
 # http://doc.lua-lang.org/grammar.html#keywords
 
-reserved_words = ['abstract',
+reserved_words = ['local',
+                  ### the remaining are copy/paste from Rust.
+                  # TODO must be removed
+                  'abstract',
                   'alignof',
                   'as',
                   'become',

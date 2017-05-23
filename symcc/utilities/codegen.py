@@ -1134,7 +1134,7 @@ class LuaCodeGen(CodeGen):
 
             lua_expr = lua_code(result.expr, assign_to=assign_to, human=False)
 
-            code_lines.append("let %s\n" % lua_expr);
+            code_lines.append("local %s\n" % lua_expr);
 
         if len(returns) > 1:
             returns = ['(' + ', '.join(returns) + ')']
