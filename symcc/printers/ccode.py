@@ -44,6 +44,7 @@ class CCodePrinter(CodePrinter):
     _default_settings = {
         'order': None,
         'full_prec': 'auto',
+        'human': True,
         'precision': 15,
         'user_functions': {},
         'dereference': set()
