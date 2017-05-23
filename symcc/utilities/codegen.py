@@ -862,10 +862,6 @@ class FCodeGen(CodeGen):
             else:
                 raise ValueError("Unknown variable : %s" % result)
 
-
-            print(">>>> expr      " + str(expr))
-            print(">>>> assign_to " + str(assign_to))
-
             if not skip:
                 constants   = set([])
                 not_fortran = set([])
@@ -1026,11 +1022,7 @@ class LuaCodeGen(CodeGen):
                     raise CodeGenError("Only Indexed, Symbol, or MatrixSymbol "
                                        "can define output arguments.")
 
-                print(">>>> expr    " + str(expr) + \
-                      "     symbol  " + str(symbol) + \
-                      "     out_arg " + str(out_arg))
                 if out_arg in argument_sequence:
-                    print("XXXXXXXXXXXX")
                     #return_vals.append(Result(expr, name=out_arg))
                     return_vals.append(Result(expr, name=symbol, result_var=out_arg))
                 else:
@@ -1164,6 +1156,16 @@ class LuaCodeGen(CodeGen):
 
         variables = list(routine.statements) + routine.results
 
+        results = []
+        for result in routine.results:
+            if isinstance(result, Result):
+                results.append(result.result_var)
+            elif isinstance(result, Assign):
+                results.append(result.lhs)
+            else:
+                raise ValueError("Unknown variable : %s" % result)
+
+
         for i, result in enumerate(variables):
             expr      = None
             assign_to = None
@@ -1177,22 +1179,17 @@ class LuaCodeGen(CodeGen):
             else:
                 raise ValueError("Unknown variable : %s" % result)
 
-            print(">>>> expr      " + str(expr))
-            print(">>>> assign_to " + str(assign_to))
             lua_expr = lua_code(expr, assign_to=assign_to, human=False)
 
-            if assign_to in routine.results:
+            if assign_to in results:
                 code_lines.append("%s\n" % lua_expr);
             else:
                 code_lines.append("local %s\n" % lua_expr);
 
-        print("///// " + str(returns))
-        if len(returns) > 1:
-            returns = ['return ' + ', '.join(returns)]
-        elif len(returns) == 1:
+        if len(returns) == 1:
             returns = ['return ' + str(returns[0]) ]
-        print("\\\\\\\\\\ " + str(returns))
-
+        elif len(returns) > 1:
+            returns = ['return ' + ', '.join(returns)]
         returns.append('\n')
 
         return declarations + code_lines + returns
