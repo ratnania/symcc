@@ -7,7 +7,6 @@ import os
 import textwrap
 from sympy import sympify
 from sympy.core import Symbol, S, Tuple, Equality, Function, Basic
-from sympy.printing import ccode
 from sympy.matrices import (MatrixSymbol, ImmutableMatrix, MatrixBase,
                             MatrixExpr, MatrixSlice)
 from sympy.tensor import Idx, Indexed, IndexedBase
@@ -16,6 +15,9 @@ from sympy.core.compatibility import is_sequence, StringIO, string_types
 
 from symcc.types.ast import Assign, For
 from symcc.printers.fcode import fcode, FCodePrinter
+from symcc.printers.ccode import ccode, CCodePrinter
+from symcc.printers.luacode import lua_code, LuaCodePrinter
+
 
 __all__ = ["codegen"]
 
@@ -701,6 +703,8 @@ class CodeGen(object):
             f.write(code_lines)
 
 
+
+
 class FCodeGen(CodeGen):
     """Generator for Fortran 95 code
 
@@ -948,31 +952,114 @@ class FCodeGen(CodeGen):
     dump_fns = [dump_f95, dump_h]
 
 
-class LUACodeGen(CodeGen):
-    """Generator for LUA code.
+class LuaCodeGen(CodeGen):
+    """Generator for Lua code.
 
-    The .write() method inherited from CodeGen will output a code file and
-    an interface file, <prefix>.c and <prefix>.h respectively.
+    The .write() method inherited from CodeGen will output a code file
+    <prefix>.lua
 
     """
 
     code_extension = "lua"
-    interface_extension = "h"
-    standard = 'c99'
 
-    def _ccode(self, *args, **kwargs):
-        kwargs['standard'] = kwargs.get('standard', self.standard)
-        return ccode(*args, **kwargs)
+    def routine(self, name, expr, argument_sequence, statements, global_vars, local_vars=None):
+        """Specialized Routine creation for Lua."""
+
+        if is_sequence(expr) and not isinstance(expr, (MatrixBase, MatrixExpr)):
+            if not expr:
+                raise ValueError("No expression given")
+            expressions = Tuple(*expr)
+        else:
+            expressions = Tuple(expr)
+
+        # local variables
+        if local_vars is None:
+            local_vars = set([])
+        local_vars = local_vars.union({i.label for i in expressions.atoms(Idx)})
+
+        # global variables
+        global_vars = set() if global_vars is None else set(global_vars)
+
+        # symbols that should be arguments
+        symbols = expressions.free_symbols - local_vars - global_vars
+
+        # Lua supports multiple return values
+        return_vals = []
+        output_args = []
+        stmts = []
+        for (i, expr) in enumerate(expressions):
+            if isinstance(expr, Equality):
+                out_arg = expr.lhs
+                expr = expr.rhs
+                symbol = out_arg
+                if isinstance(out_arg, Indexed):
+                    dims = tuple([ (S.One, dim) for dim in out_arg.shape])
+                    symbol = out_arg.base.label
+                    output_args.append(InOutArgument(symbol, out_arg, expr, dimensions=dims))
+                if not isinstance(out_arg, (Indexed, Symbol, MatrixSymbol)):
+                    raise CodeGenError("Only Indexed, Symbol, or MatrixSymbol "
+                                       "can define output arguments.")
+
+                return_vals.append(Result(expr, name=symbol, result_var=out_arg))
+                if not expr.has(symbol):
+                    # this is a pure output: remove from the symbols list, so
+                    # it doesn't become an input.
+                    symbols.remove(symbol)
+
+            else:
+                # we have no name for this output
+                return_vals.append(Result(expr, name='out%d' % (i+1)))
+
+        # setup input argument list
+        output_args.sort(key=lambda x: str(x.name))
+        arg_list = list(output_args)
+        array_symbols = {}
+        for array in expressions.atoms(Indexed):
+            array_symbols[array.base.label] = array
+        for array in expressions.atoms(MatrixSymbol):
+            array_symbols[array] = array
+
+        for symbol in sorted(symbols, key=str):
+            arg_list.append(InputArgument(symbol))
+
+        if argument_sequence is not None:
+            # if the user has supplied IndexedBase instances, we'll accept that
+            new_sequence = []
+            for arg in argument_sequence:
+                if isinstance(arg, IndexedBase):
+                    new_sequence.append(arg.label)
+                else:
+                    new_sequence.append(arg)
+            argument_sequence = new_sequence
+
+            missing = [x for x in arg_list if x.name not in argument_sequence]
+            if missing:
+                msg = "Argument list didn't specify: {0} "
+                msg = msg.format(", ".join([str(m.name) for m in missing]))
+                raise CodeGenArgumentListError(msg, missing)
+
+            # create redundant arguments to produce the requested sequence
+            name_arg_dict = dict([(x.name, x) for x in arg_list])
+            new_args = []
+            for symbol in argument_sequence:
+                try:
+                    new_args.append(name_arg_dict[symbol])
+                except KeyError:
+                    new_args.append(InputArgument(symbol))
+            arg_list = new_args
+
+        return Routine(name, arg_list, return_vals, stmts, local_vars, global_vars)
+
 
     def _get_header(self):
         """Writes a common header for the generated files."""
         code_lines = []
-        code_lines.append("/" + "*"*78 + '\n')
+        code_lines.append("/*\n")
         tmp = header_comment % {"version": sympy_version,
-            "project": self.project}
+                                "project": self.project}
         for line in tmp.splitlines():
-            code_lines.append(" *%s*\n" % line.center(76))
-        code_lines.append(" " + "*"*78 + "/\n")
+            code_lines.append((" *%s" % line.center(76)).rstrip() + "\n")
+        code_lines.append(" */\n")
         return code_lines
 
     def get_prototype(self, routine):
@@ -984,27 +1071,28 @@ class LUACodeGen(CodeGen):
         See: http://en.wikipedia.org/wiki/Function_prototype
 
         """
-        if len(routine.results) > 1:
-            raise CodeGenError("C only supports a single or no return value.")
-        elif len(routine.results) == 1:
-            ctype = routine.results[0].get_datatype('C')
+        results = [i.get_datatype('Lua') for i in routine.results]
+
+        if len(results) == 1:
+            rstype = " -> " + results[0]
+        elif len(routine.results) > 1:
+            rstype = " -> (" + ", ".join(results) + ")"
         else:
-            ctype = "void"
+            rstype = ""
 
         type_args = []
         for arg in routine.arguments:
-            name = self._ccode(arg.name)
+            name = lua_code(arg.name)
             if arg.dimensions or isinstance(arg, ResultBase):
-                type_args.append((arg.get_datatype('C'), "*%s" % name))
+                type_args.append(("*%s" % name, arg.get_datatype('Lua')))
             else:
-                type_args.append((arg.get_datatype('C'), name))
-        arguments = ", ".join([ "%s %s" % t for t in type_args])
-        return "%s %s(%s)" % (ctype, routine.name, arguments)
+                type_args.append((name, arg.get_datatype('Lua')))
+        arguments = ", ".join([ "%s: %s" % t for t in type_args])
+        return "fn %s(%s)%s" % (routine.name, arguments, rstype)
 
     def _preprocessor_statements(self, prefix):
         code_lines = []
-        code_lines.append("#include \"%s.h\"\n" % os.path.basename(prefix))
-        code_lines.append("#include <math.h>\n")
+        # code_lines.append("use std::f64::consts::*;\n")
         return code_lines
 
     def _get_routine_opening(self, routine):
@@ -1024,7 +1112,10 @@ class LUACodeGen(CodeGen):
         return []
 
     def _call_printer(self, routine):
+
         code_lines = []
+        declarations = []
+        returns = []
 
         # Compose a list of symbols to be dereferenced in the function
         # body. These are the arguments that were passed by a reference
@@ -1034,43 +1125,26 @@ class LUACodeGen(CodeGen):
             if isinstance(arg, ResultBase) and not arg.dimensions:
                 dereference.append(arg.name)
 
-        return_val = None
-        variables = routine.result_variables + list(routine.statements)
-        for result in variables:
-            expr = None
+        for i, result in enumerate(routine.results):
             if isinstance(result, Result):
-                assign_to = routine.name + "_result"
-                t = result.get_datatype('lua')
-                code_lines.append("{0} {1};\n".format(t, str(assign_to)))
-                return_val = assign_to
-
-                expr      = result.expr
-            elif isinstance(result, Assign):
-                assign_to = result.lhs
-                expr      = result.rhs
+                assign_to = result.result_var
+                returns.append(str(result.result_var))
             else:
-                assign_to = result.result_var
+                raise CodeGenError("unexpected object in Routine results")
 
-            try:
-                constants, not_c, c_expr = self._ccode(expr, human=False,
-                        assign_to=assign_to, dereference=dereference)
-            except AssignmentError:
-                assign_to = result.result_var
-                code_lines.append(
-                    "%s %s;\n" % (result.get_datatype('lua'), str(assign_to)))
-                constants, not_c, c_expr = self._ccode(result.expr, human=False,
-                        assign_to=assign_to, dereference=dereference)
+            lua_expr = lua_code(result.expr, assign_to=assign_to, human=False)
 
-            for name, value in sorted(constants, key=str):
-                code_lines.append("double const %s = %s;\n" % (name, value))
-            code_lines.append("%s\n" % c_expr)
+            code_lines.append("let %s\n" % lua_expr);
 
-        if return_val:
-            code_lines.append("   return %s;\n" % return_val)
-        return code_lines
+        if len(returns) > 1:
+            returns = ['(' + ', '.join(returns) + ')']
+
+        returns.append('\n')
+
+        return declarations + code_lines + returns
 
     def _indent_code(self, codelines):
-        p = c_code_printers[self.standard.lower()]()
+        p = LuaCodePrinter()
         return p.indent_code(codelines)
 
     def _get_routine_ending(self, routine):
@@ -1082,63 +1156,13 @@ class LUACodeGen(CodeGen):
     dump_lua.extension = code_extension
     dump_lua.__doc__ = CodeGen.dump_code.__doc__
 
-    def dump_h(self, routines, f, prefix, header=True, empty=True):
-        """Writes the Lua header file.
-
-        This file contains all the function declarations.
-
-        Parameters
-        ==========
-
-        routines : list
-            A list of Routine instances.
-
-        f : file-like
-            Where to write the file.
-
-        prefix : string
-            The filename prefix, used to construct the include guards.
-            Only the basename of the prefix is used.
-
-        header : bool, optional
-            When True, a header comment is included on top of each source
-            file.  [default : True]
-
-        empty : bool, optional
-            When True, empty lines are included to structure the source
-            files.  [default : True]
-
-        """
-        if header:
-            print(''.join(self._get_header()), file=f)
-        guard_name = "%s__%s__H" % (self.project.replace(
-            " ", "_").upper(), prefix.replace("/", "_").upper())
-        # include guards
-        if empty:
-            print(file=f)
-        print("#ifndef %s" % guard_name, file=f)
-        print("#define %s" % guard_name, file=f)
-        if empty:
-            print(file=f)
-        # declaration of the function prototypes
-        for routine in routines:
-            prototype = self.get_prototype(routine)
-            print("%s;" % prototype, file=f)
-        # end if include guards
-        if empty:
-            print(file=f)
-        print("#endif", file=f)
-        if empty:
-            print(file=f)
-
-    dump_h.extension = interface_extension
-
     # This list of dump functions is used by CodeGen.write to know which dump
     # functions it has to call.
-    dump_fns = [dump_lua, dump_h]
+    dump_fns = [dump_lua]
 
-def get_code_generator(language, project, standard=None):
-    CodeGenClass = {"LUA": LUACodeGen,
+def get_code_generator(language, project):
+
+    CodeGenClass = {"LUA": LuaCodeGen,
                     "F95": FCodeGen}.get(language.upper())
     if CodeGenClass is None:
         raise ValueError("Language '%s' is not supported." % language)
@@ -1152,7 +1176,7 @@ def get_code_generator(language, project, standard=None):
 
 def codegen(name_expr, language, prefix=None, project="project",
             to_files=False, header=True, empty=True, argument_sequence=None,
-            global_vars=None, standard=None, local_vars=None, statements=None):
+            global_vars=None, local_vars=None, statements=None):
     """Generate source code for expressions in a given language.
 
     Parameters
@@ -1282,7 +1306,7 @@ def codegen(name_expr, language, prefix=None, project="project",
     """
 
     # Initialize the code generator.
-    code_gen = get_code_generator(language, project, standard)
+    code_gen = get_code_generator(language, project)
 
     if isinstance(name_expr[0], string_types):
         # single tuple is given, turn it into a singleton list with a tuple.
