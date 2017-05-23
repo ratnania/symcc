@@ -1122,7 +1122,11 @@ class LuaCodeGen(CodeGen):
 
     def _get_routine_opening(self, routine):
         prototype = self.get_prototype(routine)
-        return ["%s {\n" % prototype]
+        return ["%s \n" % prototype]
+
+    def _get_routine_ending(self, routine):
+        """Returns the closing statements of the lua routine."""
+        return ["end\n"]
 
     def _declare_arguments(self, routine):
         # arguments are declared in prototype
@@ -1181,9 +1185,6 @@ class LuaCodeGen(CodeGen):
     def _indent_code(self, codelines):
         p = LuaCodePrinter()
         return p.indent_code(codelines)
-
-    def _get_routine_ending(self, routine):
-        return ["}\n"]
 
     def dump_lua(self, routines, f, prefix, header=True, empty=True):
         self.dump_code(routines, f, prefix, header, empty)
