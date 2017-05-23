@@ -553,9 +553,9 @@ class CodeGen(object):
 #                if not isinstance(expr, Assign):
 #                    return_val.append(Result(expr))
 
-        arg_list = []
 
         # setup input argument list
+        arg_list = []
         array_symbols = {}
         for array in expressions.atoms(Indexed):
             array_symbols[array.base.label] = array
@@ -981,7 +981,16 @@ class LuaCodeGen(CodeGen):
         global_vars = set() if global_vars is None else set(global_vars)
 
         # symbols that should be arguments
-        symbols = expressions.free_symbols - local_vars - global_vars
+        free_symbols = set([])
+        for expr in expressions:
+            if not isinstance(expr, For):
+                for f in expr.free_symbols:
+                    free_symbols.add(f)
+            else:
+                free_symbols.add(expr.target)
+                free_symbols.add(expr.iterable.stop)
+
+        symbols = free_symbols - local_vars - global_vars
 
         # Lua supports multiple return values
         return_vals = []
@@ -1031,7 +1040,6 @@ class LuaCodeGen(CodeGen):
                 if (expr.has(symbol)) or (not(symbol in local_vars)):
                     output_args.append(
                         InOutArgument(symbol, out_arg, out_arg + S.Zero, dimensions=dims))
-
 
                 # avoid duplicate arguments
                 if not(symbol in local_vars):
@@ -1166,20 +1174,30 @@ class LuaCodeGen(CodeGen):
                 raise ValueError("Unknown variable : %s" % result)
 
 
+        # TODO for the moment, For is passed as a Result. must be changed, first
+        # in the routine method...
+        print(">>>> results : " + str(results))
         for i, result in enumerate(variables):
             expr      = None
             assign_to = None
             if isinstance(result, Result):
                 assign_to = result.result_var
                 expr      = result.expr
-                returns.append(str(result.result_var))
+                if not isinstance(expr, For):
+                    returns.append(str(result.result_var))
+
             elif isinstance(result, Assign):
                 assign_to = result.lhs
                 expr      = result.rhs
             else:
                 raise ValueError("Unknown variable : %s" % result)
 
-            lua_expr = lua_code(expr, assign_to=assign_to, human=False)
+            print(">>>> " + str(assign_to) + "   " + str(expr))
+
+            if isinstance(expr, For):
+                lua_expr = lua_code(expr, human=False)
+            else:
+                lua_expr = lua_code(expr, assign_to=assign_to, human=False)
 
             if assign_to in results:
                 code_lines.append("%s\n" % lua_expr);

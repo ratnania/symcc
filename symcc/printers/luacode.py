@@ -523,11 +523,11 @@ class LuaCodePrinter(CodePrinter):
             code_lines = self.indent_code(code.splitlines(True))
             return ''.join(code_lines)
 
+        code = [ line.lstrip(' \t') for line in code ]
+
         tab = "    "
         inc_token = ('do')
         dec_token = ('end')
-
-        code = [ line.lstrip(' \t') for line in code ]
 
         increase = [ int(any(map(line.endswith, inc_token))) for line in code ]
         decrease = [ int(any(map(line.startswith, dec_token))) for line in code ]
