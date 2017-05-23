@@ -1073,12 +1073,8 @@ class LuaCodeGen(CodeGen):
         """
         results = [i.get_datatype('Lua') for i in routine.results]
 
-        if len(results) == 1:
-            rstype = " -> " + results[0]
-        elif len(routine.results) > 1:
-            rstype = " -> (" + ", ".join(results) + ")"
-        else:
-            rstype = ""
+        # no type specification for results
+        rstype = ""
 
         type_args = []
         for arg in routine.arguments:
@@ -1087,8 +1083,8 @@ class LuaCodeGen(CodeGen):
                 type_args.append(("*%s" % name, arg.get_datatype('Lua')))
             else:
                 type_args.append((name, arg.get_datatype('Lua')))
-        arguments = ", ".join([ "%s: %s" % t for t in type_args])
-        return "fn %s(%s)%s" % (routine.name, arguments, rstype)
+        arguments = ", ".join([ "%s %s" % t for t in type_args])
+        return "function %s(%s)%s" % (routine.name, arguments, rstype)
 
     def _preprocessor_statements(self, prefix):
         code_lines = []
