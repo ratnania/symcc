@@ -313,16 +313,21 @@ class ValeCodegen(Codegen):
         return self._name
 
     def doprint(self, language):
+        args = self.args
+        local_vars = self.local_vars
         if language in ["LUA"]:
+            args.remove(Symbol("contribution"))
+            local_vars.append(Symbol("contribution"))
+
             [(f_name, f_code)] = codegen((self.name, self.body), language, \
                                          header=False, empty=True, \
-                                         argument_sequence=set(self.args), \
-                                         local_vars=set(self.local_vars))
+                                         argument_sequence=set(args), \
+                                         local_vars=set(local_vars))
         else:
             [(f_name, f_code), header] = codegen((self.name, self.body), language, \
                                                  header=False, empty=True, \
-                                                 argument_sequence=set(self.args), \
-                                                 local_vars=set(self.local_vars))
+                                                 argument_sequence=set(args), \
+                                                 local_vars=set(local_vars))
 
         return f_code
 

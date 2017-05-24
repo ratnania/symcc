@@ -1207,32 +1207,40 @@ class LuaCodeGen(CodeGen):
         # in the routine method...
         stmts = list(routine.statements) + routine.results
 #        print(">>>> RESULTS         : " + str(results))
-#        print(">>>> LOCALS          : " + str(local_vars))
 #        print(">>>> ROUTINE.LOCALS  : " + str(routine.local_vars))
         for i, result in enumerate(stmts):
-#            print(">>>> STMT   : " + str(result))
+            print(">>>> STMT   : " + str(result))
+            print(">>>> LOCALS          : " + str(local_vars))
             expr      = None
             assign_to = None
             if isinstance(result, Result):
                 assign_to = result.result_var
                 expr      = result.expr
 
-                lua_expr = lua_code(expr, assign_to=assign_to, human=False)
+                lua_expr = lua_code(expr, assign_to=assign_to, human=False,
+                                    local_vars=local_vars)
 
                 if assign_to in results:
                     code_lines.append("%s\n" % lua_expr);
                 else:
                     code_lines.append("local %s\n" % lua_expr);
+
+                local_vars = set([x for x in local_vars \
+                                  if (not str(x) == str(assign_to))])
             elif isinstance(result, Assign):
                 assign_to = result.lhs
                 expr      = result.rhs
 
-                lua_expr = lua_code(expr, assign_to=assign_to, human=False)
+                lua_expr = lua_code(expr, assign_to=assign_to, human=False,
+                                    local_vars=local_vars)
 
                 if assign_to in results:
                     code_lines.append("%s\n" % lua_expr);
                 else:
                     code_lines.append("local %s\n" % lua_expr);
+
+                local_vars = set([x for x in local_vars \
+                                  if (not str(x) == str(assign_to))])
             elif isinstance(result, For):
                 lua_expr = lua_code(result, human=False,
                                     local_vars=local_vars)
