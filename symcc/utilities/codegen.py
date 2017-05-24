@@ -617,6 +617,7 @@ class CodeGen(object):
                     new_args.append(InputArgument(symbol))
             arg_list = new_args
 
+        arg_list.sort(key=lambda x: str(x.name).lower())
         return Routine(name, arg_list, return_val, stmts, local_vars, global_vars)
 
     def write(self, routines, prefix, to_files=False, header=True, empty=True):
