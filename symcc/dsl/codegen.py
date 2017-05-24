@@ -9,6 +9,18 @@ from sympy.core.sympify import sympify
 
 __all__ = ["ValeCodegen"]
 
+# ...
+def _get_by_name(ast, name):
+    """
+    Returns an object from the AST by giving its name.
+    """
+    for token in ast.declarations:
+        if token.name == name:
+            return token
+    return None
+# ...
+
+
 class Codegen(object):
     def __init__(self, body, local_vars=None, args=None):
 
@@ -260,47 +272,84 @@ class Formulation(Codegen):
 
 class ValeCodegen(Codegen):
     """Code generation for the Vale Grammar"""
-    def __init__(self, expr, dim, name, trial=False):
+    def __init__(self, expr, dim=None, name=None, trial=False, ast=None):
         """
         expr: sympy.expression or LinearForm or BilinearForm
+            if expr is a LinearForm or BilinearForm, then either dim or ast must
+            be provided.
         """
         from symcc.dsl.vale import LinearForm, BilinearForm
 
-        _expr = None
+        _expr  = None
+        _name  = None
+        _dim   = None
+        _trial = False
+
         if isinstance(expr, LinearForm):
             _expr = expr.to_sympy()
             for f in expr.args.functions:
                 B = "Ni"
                 _expr = _expr.subs({Symbol(f): Symbol(B + "_0")})
-                for d in ["x", "y", "z"][:dim]:
+                for d in ["x", "y", "z"][:_dim]:
                     _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
+
+            _name = "kernel_" + expr.name
+
+            if not(ast is None):
+                space  = _get_by_name(ast, expr.args.space)
+                domain = _get_by_name(ast, space.domain)
+
+                _dim = domain.dim
+            elif not(dim is None):
+                _dim = dim
+            else:
+                raise ValueError("ast or dim must be provided.")
 
         elif isinstance(expr, BilinearForm):
             _expr = expr.to_sympy()
             for f in expr.args_test.functions:
                 B = "Ni"
                 _expr = _expr.subs({Symbol(f): Symbol(B + "_0")})
-                for d in ["x", "y", "z"][:dim]:
+                for d in ["x", "y", "z"][:_dim]:
                     _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
 
             for f in expr.args_trial.functions:
                 B = "Nj"
                 _expr = _expr.subs({Symbol(f): Symbol(B + "_0")})
-                for d in ["x", "y", "z"][:dim]:
+                for d in ["x", "y", "z"][:_dim]:
                     _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
 
-        else:
-            _expr = expr
+            _name  = "kernel_" + expr.name
+            _trial = True
 
-        self._name = name
+            if not(ast is None):
+                space  = _get_by_name(ast, expr.args_test.space)
+                domain = _get_by_name(ast, space.domain)
+
+                _dim = domain.dim
+            elif not(dim is None):
+                _dim = dim
+            else:
+                raise ValueError("ast or dim must be provided.")
+
+        else:
+            if not(dim is None) or not(name is None):
+                raise ValueError("Both dim and name must be provided.")
+
+            _expr  = expr
+            _name  = name
+            _dim   = dim
+            _trial = trial
+
+        self._name = _name
 
         stmts  = []
-        stmts += [Geometry(dim), \
-                  TestFunction(dim)]
-        if trial:
-            stmts += [TrialFunction(dim)]
+        stmts += [Geometry(_dim), \
+                  TestFunction(_dim)]
+        if _trial:
+            stmts += [TrialFunction(_dim)]
 
-        stmts += [Pullback(dim, trial=trial), \
+        stmts += [Pullback(_dim, trial=_trial), \
                   Formulation(_expr)]
 
         body       = []
@@ -330,9 +379,9 @@ class ValeCodegen(Codegen):
         g3 = Symbol('g3', integer=True)
         n3 = Symbol('n3', integer=True)
 
-        if dim >= 3:
+        if _dim >= 3:
             body = [For(g3, (1, n3, 1), body)]
-        if dim >= 2:
+        if _dim >= 2:
             body = [For(g2, (1, n2, 1), body)]
         body  = [Assign(contribution, 0.), For(g1, (1, n1, 1), body)]
 

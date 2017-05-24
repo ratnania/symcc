@@ -71,13 +71,27 @@ class Function(object):
 
 
 class LinearForm(object):
+    _available_attributs = ["dim"]
+
     def __init__(self, **kwargs):
         self.name       = kwargs.pop('name')
         self.args       = kwargs.pop('args')
         self.domain     = kwargs.pop('domain')
         self.expression = kwargs.pop('expression')
+        self._attributs = {}
 
         namespace[self.name] = self
+
+    @property
+    def attributs(self):
+        return self._attributs
+
+    def set(self, attribut, value):
+        """Sets value to the attribut"""
+        if attribut in self._available_attributs:
+            self._attributs[attribut] = value
+        else:
+            raise ValueError("Unknown attribut : %s" % attribut)
 
     def to_sympy(self):
         for f in self.args.functions:
@@ -91,14 +105,21 @@ class LinearForm(object):
         return expr
 
 class BilinearForm(object):
+    _available_attributs = [""]
+
     def __init__(self, **kwargs):
         self.name       = kwargs.pop('name')
         self.args_test  = kwargs.pop('args_test')
         self.args_trial = kwargs.pop('args_trial')
         self.domain     = kwargs.pop('domain')
         self.expression = kwargs.pop('expression')
+        self._attributs = {}
 
         namespace[self.name] = self
+
+    @property
+    def attributs(self):
+        return self._attributs
 
     def to_sympy(self):
         args = self.args_test.functions + self.args_trial.functions
