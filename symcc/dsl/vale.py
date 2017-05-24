@@ -98,7 +98,10 @@ class Form(object):
 
 
 class LinearForm(Form):
-    _available_attributs = ["dim"]
+    _available_attributs = ["dim", \
+                            "user_fields", \
+                            "user_functions", \
+                            "user_constants"]
 
     def __init__(self, **kwargs):
         self.name       = kwargs.pop('name')
@@ -122,7 +125,10 @@ class LinearForm(Form):
         return expr
 
 class BilinearForm(Form):
-    _available_attributs = ["dim"]
+    _available_attributs = ["dim", \
+                            "user_fields", \
+                            "user_functions", \
+                            "user_constants"]
 
     def __init__(self, **kwargs):
         self.name       = kwargs.pop('name')
@@ -304,16 +310,61 @@ class ValeParser(Parser):
         # ... annotating the AST
         for token in ast.declarations:
             if isinstance(token, LinearForm):
+                user_fields    = []
+                user_functions = []
+                user_constants = []
+
                 space  = _get_by_name(ast, token.args.space)
                 domain = _get_by_name(ast, space.domain)
 
+                expr = token.to_sympy()
+                free_symbols = expr.free_symbols
+                for symbol in free_symbols:
+                    var = _get_by_name(ast, str(symbol))
+                    if isinstance(var, Field):
+                        user_fields.append(var)
+                    elif isinstance(var, Function):
+                        user_functions.append(var)
+                    elif isinstance(var, Real):
+                        user_constants.append(var)
+
                 token.set("dim", domain.dim)
+                token.set("user_fields", user_fields)
+                token.set("user_functions", user_functions)
+                token.set("user_constants", user_constants)
+
+                print("> FIELDS    : " + str(token.attributs["user_fields"]))
+                print("> FUNCTIONS : " + str(token.attributs["user_functions"]))
+                print("> CONSTANTS : " + str(token.attributs["user_constants"]))
+
             elif isinstance(token, BilinearForm):
+                user_fields    = []
+                user_functions = []
+                user_constants = []
+
                 space_test  = _get_by_name(ast, token.args_test.space)
                 space_trial = _get_by_name(ast, token.args_trial.space)
                 domain      = _get_by_name(ast, space_test.domain)
 
+                expr = token.to_sympy()
+                free_symbols = expr.free_symbols
+                for symbol in free_symbols:
+                    var = _get_by_name(ast, str(symbol))
+                    if isinstance(var, Field):
+                        user_fields.append(var)
+                    elif isinstance(var, Function):
+                        user_functions.append(var)
+                    elif isinstance(var, Real):
+                        user_constants.append(var)
+
                 token.set("dim", domain.dim)
+                token.set("user_fields", user_fields)
+                token.set("user_functions", user_functions)
+                token.set("user_constants", user_constants)
+
+                print("> FIELDS    : " + str(token.attributs["user_fields"]))
+                print("> FUNCTIONS : " + str(token.attributs["user_functions"]))
+                print("> CONSTANTS : " + str(token.attributs["user_constants"]))
         # ...
 
         return ast

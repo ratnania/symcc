@@ -26,16 +26,6 @@ def test_dsl():
     ast = vale.parse_from_file("vale/test.vl")
     # ...
 
-    # ... for every token, we print its name and type
-    for token in ast.declarations:
-        print token.name, type(token)
-    # ...
-
-    # ...
-    # construct the list of all declarations
-    identifiers = [token.name for token in ast.declarations]
-    # ...
-
     # ...
     def get_by_name(ast, name):
         """
@@ -54,8 +44,8 @@ def test_dsl():
     # ...
 
     # ... TODO get dim from domain
-    kernel = ValeCodegen(l1)
-#    kernel = ValeCodegen(a1)
+#    kernel = ValeCodegen(l1)
+    kernel = ValeCodegen(a1)
 #    print (kernel.doprint("F95"))
     print (kernel.doprint("LUA"))
     # ...
