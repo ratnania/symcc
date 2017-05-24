@@ -499,7 +499,7 @@ class CodeGen(object):
         # Decide whether to use output argument or return value
         return_val = []
         if not return_vars is None:
-            return_vals += list(return_vars)
+            return_val += list(return_vars)
 
         output_args = []
         stmts = []
@@ -1224,8 +1224,8 @@ class LuaCodeGen(CodeGen):
 #        print(">>>> RESULTS         : " + str(results))
 #        print(">>>> ROUTINE.LOCALS  : " + str(routine.local_vars))
         for i, result in enumerate(stmts):
-            print(">>>> STMT   : " + str(result))
-            print(">>>> LOCALS          : " + str(local_vars))
+#            print(">>>> STMT   : " + str(result))
+#            print(">>>> LOCALS          : " + str(local_vars))
             expr      = None
             assign_to = None
             if isinstance(result, Result):
