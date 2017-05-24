@@ -994,9 +994,9 @@ class LuaCodeGen(CodeGen):
             local_vars = set([])
         local_vars = local_vars.union({i.label for i in expressions.atoms(Idx)})
 
-        # add Idx from local symbols
-        local_vars = set(local_vars.union(set([s.label if isinstance(s, Idx)
-                                               else s for s in free_symbols])))
+#        # add Idx from local symbols
+#        local_vars = set(local_vars.union(set([s.label if isinstance(s, Idx)
+#                                               else s for s in free_symbols])))
 
         symbols = free_symbols - local_vars - global_vars
 #        print(">>>> free_symbols : " + str(free_symbols))
@@ -1009,6 +1009,7 @@ class LuaCodeGen(CodeGen):
         output_args = []
         stmts = []
         for (i, expr) in enumerate(expressions):
+#            print(">>>> Treating : " + str(expr))
             if isinstance(expr, Equality):
                 out_arg = expr.lhs
                 expr = expr.rhs
@@ -1043,11 +1044,12 @@ class LuaCodeGen(CodeGen):
                     raise CodeGenError("Only Indexed, Symbol, or MatrixSymbol "
                                        "can define output arguments.")
 
-                if out_arg in argument_sequence:
-                    #return_vals.append(Result(expr, name=out_arg))
-                    return_vals.append(Result(expr, name=symbol, result_var=out_arg))
-                else:
-                    stmts.append(Assign(out_arg, expr))
+#                if out_arg in argument_sequence:
+#                    #return_vals.append(Result(expr, name=out_arg))
+#                    return_vals.append(Result(expr, name=symbol, result_var=out_arg))
+#                else:
+#                    stmts.append(Assign(out_arg, expr))
+                stmts.append(Assign(out_arg, expr))
 
                 if (expr.has(symbol)) or (not(symbol in local_vars)):
                     output_args.append(
@@ -1101,6 +1103,7 @@ class LuaCodeGen(CodeGen):
                     new_args.append(InputArgument(symbol))
             arg_list = new_args
 
+        print(">>>> return_vals : " +str(return_vals))
         return Routine(name, arg_list, return_vals, stmts, local_vars, global_vars)
 
     def _get_header(self):
@@ -1198,13 +1201,17 @@ class LuaCodeGen(CodeGen):
         for e in routine.results + routine.statements:
             results += _construct_results(e)
 
+#        local_vars = routine.local_vars.difference(set(routine.arguments))
+        local_vars = routine.local_vars
+
         # TODO for the moment, For is passed as a Result. must be changed, first
         # in the routine method...
         stmts = list(routine.statements) + routine.results
-#        print(">>>> RESULTS : " + str(results))
-#        print(">>>> LOCALS  : " + str(routine.local_vars))
-#        print(">>>> STMTS   : " + str(stmts))
+#        print(">>>> RESULTS         : " + str(results))
+#        print(">>>> LOCALS          : " + str(local_vars))
+#        print(">>>> ROUTINE.LOCALS  : " + str(routine.local_vars))
         for i, result in enumerate(stmts):
+#            print(">>>> STMT   : " + str(result))
             expr      = None
             assign_to = None
             if isinstance(result, Result):
@@ -1229,7 +1236,7 @@ class LuaCodeGen(CodeGen):
                     code_lines.append("local %s\n" % lua_expr);
             elif isinstance(result, For):
                 lua_expr = lua_code(result, human=False,
-                                    local_vars=routine.local_vars)
+                                    local_vars=local_vars)
                 code_lines.append("%s\n" % lua_expr);
             else:
                 raise ValueError("Unknown variable : %s" % result)
@@ -1237,10 +1244,12 @@ class LuaCodeGen(CodeGen):
         def _construct_returns(expr):
             _returns = []
             if isinstance(expr, Result) and \
-               (not expr.result_var in routine.local_vars):
+               (not expr.result_var in routine.local_vars) and \
+               (not isinstance(expr.result_var, Idx)):
                 _returns.append(str(expr.result_var))
             elif isinstance(expr, Assign) and \
-               (not expr.lhs in routine.local_vars):
+               (not expr.lhs in routine.local_vars) and \
+               (not isinstance(expr.lhs, Idx)):
                 _returns.append(str(expr.lhs))
             elif isinstance(expr, For):
                 # look inside For statements, recursively
