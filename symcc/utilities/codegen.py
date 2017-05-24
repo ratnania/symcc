@@ -71,7 +71,6 @@ class Variable(object):
             Controls the precision of floating point constants.
 
         """
-#        print(">>>> " + str(name) + "  typeof " + str(type(name)))
         if not isinstance(name, (Symbol, MatrixSymbol)):
             raise TypeError("The first argument must be a sympy symbol.")
         if datatype is None:
@@ -1007,14 +1006,7 @@ class LuaCodeGen(CodeGen):
             local_vars = set([])
         local_vars = local_vars.union({i.label for i in expressions.atoms(Idx)})
 
-#        # add Idx from local symbols
-#        local_vars = set(local_vars.union(set([s.label if isinstance(s, Idx)
-#                                               else s for s in free_symbols])))
-
         symbols = free_symbols - local_vars - global_vars
-#        print(">>>> free_symbols : " + str(free_symbols))
-#        print(">>>> local_vars   : " + str(local_vars))
-#        print(">>>> symbols      : " + str(symbols))
 
 
         # Lua supports multiple return values
@@ -1025,7 +1017,6 @@ class LuaCodeGen(CodeGen):
         output_args = []
         stmts = []
         for (i, expr) in enumerate(expressions):
-#            print(">>>> Treating : " + str(expr))
             if isinstance(expr, Equality):
                 out_arg = expr.lhs
                 expr = expr.rhs
@@ -1202,8 +1193,6 @@ class LuaCodeGen(CodeGen):
                     _results.append(expr.result_var)
             elif isinstance(expr, Assign):
                 if not isinstance(expr.lhs, Idx):
-#                    print(">>>> " + str(expr.lhs) + "  typeof  " +
-#                          str(type(expr.lhs)))
                     _results.append(expr.lhs)
             elif isinstance(expr, For):
                 # look inside For statements, recursively
@@ -1217,17 +1206,12 @@ class LuaCodeGen(CodeGen):
         for e in routine.results + routine.statements:
             results += _construct_results(e)
 
-#        local_vars = routine.local_vars.difference(set(routine.arguments))
         local_vars = routine.local_vars
 
         # TODO for the moment, For is passed as a Result. must be changed, first
         # in the routine method...
         stmts = list(routine.statements) + routine.results
-#        print(">>>> RESULTS         : " + str(results))
-#        print(">>>> ROUTINE.LOCALS  : " + str(routine.local_vars))
         for i, result in enumerate(stmts):
-#            print(">>>> STMT   : " + str(result))
-#            print(">>>> LOCALS          : " + str(local_vars))
             expr      = None
             assign_to = None
             if isinstance(result, Result):
@@ -1292,6 +1276,18 @@ class LuaCodeGen(CodeGen):
         elif len(returns) > 1:
             returns = ['return ' + ', '.join(returns)]
         returns.append('\n')
+
+        # update integers: lua does not have an integer type
+        # we must use the floor function
+        integers = []
+        for arg in routine.arguments:
+            if isinstance(arg, Argument) and not arg.dimensions:
+                if arg.name.is_integer:
+                    arg_code = str(arg.name)
+                    dcl = "local " + arg_code + " = " + \
+                          "math.floor(" + arg_code + ")\n"
+
+                    declarations.append(dcl)
 
         return declarations + code_lines + returns
 
