@@ -71,6 +71,7 @@ class Variable(object):
             Controls the precision of floating point constants.
 
         """
+#        print(">>>> " + str(name) + "  typeof " + str(type(name)))
         if not isinstance(name, (Symbol, MatrixSymbol)):
             raise TypeError("The first argument must be a sympy symbol.")
         if datatype is None:
@@ -377,6 +378,7 @@ class Routine(object):
         self.statements = statements
         self.local_vars = local_vars
         self.global_vars = global_vars
+        self.symbols = symbols
 
     def __str__(self):
         return self.__class__.__name__ + "({name!r}, {arguments}, {results}, {statements}, {local_vars}, {global_vars})".format(**self.__dict__)
@@ -972,11 +974,6 @@ class LuaCodeGen(CodeGen):
         else:
             expressions = Tuple(expr)
 
-        # local variables
-        if local_vars is None:
-            local_vars = set([])
-        local_vars = local_vars.union({i.label for i in expressions.atoms(Idx)})
-
         # global variables
         global_vars = set() if global_vars is None else set(global_vars)
 
@@ -987,10 +984,24 @@ class LuaCodeGen(CodeGen):
                 for f in expr.free_symbols:
                     free_symbols.add(f)
             else:
-                free_symbols.add(expr.target)
                 free_symbols.add(expr.iterable.stop)
+                if not isinstance(expr.target, Idx):
+                    free_symbols.add(expr.target)
+
+
+        # local variables
+        if local_vars is None:
+            local_vars = set([])
+        local_vars = local_vars.union({i.label for i in expressions.atoms(Idx)})
+
+        # add Idx from local symbols
+        local_vars = set(local_vars.union(set([s.label if isinstance(s, Idx)
+                                               else s for s in free_symbols])))
 
         symbols = free_symbols - local_vars - global_vars
+#        print(">>>> free_symbols : " + str(free_symbols))
+#        print(">>>> local_vars   : " + str(local_vars))
+#        print(">>>> symbols      : " + str(symbols))
 
 
         # Lua supports multiple return values
@@ -1168,9 +1179,13 @@ class LuaCodeGen(CodeGen):
         def _construct_results(expr):
             _results = []
             if isinstance(expr, Result):
-                _results.append(expr.result_var)
+                if not isinstance(expr.result_var, Idx):
+                    _results.append(expr.result_var)
             elif isinstance(expr, Assign):
-                _results.append(expr.lhs)
+                if not isinstance(expr.lhs, Idx):
+#                    print(">>>> " + str(expr.lhs) + "  typeof  " +
+#                          str(type(expr.lhs)))
+                    _results.append(expr.lhs)
             elif isinstance(expr, For):
                 # look inside For statements, recursively
                 for _expr in expr.body:
@@ -1186,6 +1201,9 @@ class LuaCodeGen(CodeGen):
         # TODO for the moment, For is passed as a Result. must be changed, first
         # in the routine method...
         stmts = list(routine.statements) + routine.results
+#        print(">>>> RESULTS : " + str(results))
+#        print(">>>> LOCALS  : " + str(routine.local_vars))
+#        print(">>>> STMTS   : " + str(stmts))
         for i, result in enumerate(stmts):
             expr      = None
             assign_to = None
@@ -1210,7 +1228,8 @@ class LuaCodeGen(CodeGen):
                 else:
                     code_lines.append("local %s\n" % lua_expr);
             elif isinstance(result, For):
-                lua_expr = lua_code(result, human=False, local_vars=routine.local_vars)
+                lua_expr = lua_code(result, human=False,
+                                    local_vars=routine.local_vars)
                 code_lines.append("%s\n" % lua_expr);
             else:
                 raise ValueError("Unknown variable : %s" % result)

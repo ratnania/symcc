@@ -113,17 +113,17 @@ class Geometry(Codegen):
 
             body.append(Assign(wvol, arr_wvol[g1]))
         if dim == 2:
-            body.append(Assign(Symbol('g'), sympify('(g2-1)*n1 + g1')))
-
             g = Idx('g', n1 * n2)
+            body.append(Assign(g, sympify('(g2-1)*n1 + g1')))
+
             body.append(Assign(x, arr_x[g]))
             body.append(Assign(y, arr_y[g]))
 
             body.append(Assign(wvol, arr_wvol[g]))
         if dim == 3:
-            body.append(Assign(Symbol('g'), sympify('(g3-1)*n2*n1 + (g2-1)*n1 + g1')))
-
             g = Idx('g', n1 * n2 * n3)
+            body.append(Assign(g, sympify('(g3-1)*n2*n1 + (g2-1)*n1 + g1')))
+
             body.append(Assign(x, arr_x[g]))
             body.append(Assign(y, arr_y[g]))
             body.append(Assign(z, arr_z[g]))

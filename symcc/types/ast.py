@@ -51,7 +51,7 @@ from sympy.core.basic import Basic
 from sympy.core.sympify import _sympify
 from sympy.core.compatibility import with_metaclass
 from sympy.sets.fancysets import Range
-from sympy.tensor import Indexed
+from sympy.tensor import Idx, Indexed
 from sympy.matrices import ImmutableDenseMatrix
 from sympy.matrices.expressions.matexpr import MatrixSymbol, MatrixElement
 from sympy.utilities.iterables import iterable
@@ -98,7 +98,7 @@ class Assign(Basic):
         lhs = _sympify(lhs)
         rhs = _sympify(rhs)
         # Tuple of things that can be on the lhs of an assignment
-        assignable = (Symbol, MatrixSymbol, MatrixElement, Indexed)
+        assignable = (Symbol, MatrixSymbol, MatrixElement, Indexed, Idx)
         if not isinstance(lhs, assignable):
             raise TypeError("Cannot assign to lhs of type %s." % type(lhs))
         # Indexed types implement shape, but don't define it until later. This

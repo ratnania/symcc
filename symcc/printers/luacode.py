@@ -19,6 +19,7 @@ from sympy.core import S, numbers, Rational, Float, Lambda
 from sympy.core.compatibility import string_types, range
 from sympy.printing.precedence import precedence
 from sympy.sets.fancysets import Range
+from sympy.tensor import Idx
 
 from symcc.printers.codeprinter import CodePrinter
 from symcc.types.ast import (Assign, Result, InArgument,
@@ -505,7 +506,9 @@ class LuaCodePrinter(CodePrinter):
         rhs_code = self._print(expr.rhs)
 
         local_vars = list(self.local_vars)
-        if expr.lhs in local_vars:
+        local_vars = [str(x) for x in local_vars]
+
+        if lhs_code in local_vars:
             return ("local %s = %s" % (lhs_code, rhs_code))
         else:
             return self._get_statement("%s = %s" % (lhs_code, rhs_code))
@@ -524,6 +527,7 @@ class LuaCodePrinter(CodePrinter):
         else:
             raise NotImplementedError("Only iterable currently supported is Range")
         body = '\n'.join(self._print(i) for i in expr.body)
+
         return ('for {target} = {start}, {stop} do'
                 '\n{body}\n'
                 'end').format(target=target, start=start,
