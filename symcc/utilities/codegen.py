@@ -345,10 +345,17 @@ class Routine(object):
         for r in results:
             if not isinstance(r, Result):
                 raise ValueError("Unknown Routine result: %s" % r)
+
             try:
                 symbols.update(r.expr.free_symbols)
             except:
                 pass
+
+            try:
+                symbols.update(r.expr)
+            except:
+                pass
+
 #            if (not isinstance(r, Assign)) and (not isinstance(r, For)):
 #                if not isinstance(r, Result):
 #                    raise ValueError("Unknown Routine result: %s" % r)
@@ -439,7 +446,8 @@ class CodeGen(object):
         """
         self.project = project
 
-    def routine(self, name, expr, argument_sequence, statements, global_vars, local_vars=None):
+    def routine(self, name, expr, argument_sequence, statements, global_vars, \
+                local_vars=None, return_vars=None):
         """Creates an Routine object that is appropriate for this language.
 
         This implementation is appropriate for at least C/Fortran.  Subclasses
@@ -490,6 +498,9 @@ class CodeGen(object):
 
         # Decide whether to use output argument or return value
         return_val = []
+        if not return_vars is None:
+            return_vals += list(return_vars)
+
         output_args = []
         stmts = []
         for expr in expressions:
@@ -964,7 +975,8 @@ class LuaCodeGen(CodeGen):
 
     code_extension = "lua"
 
-    def routine(self, name, expr, argument_sequence, statements, global_vars, local_vars=None):
+    def routine(self, name, expr, argument_sequence, statements, global_vars, \
+                local_vars=None, return_vars=None):
         """Specialized Routine creation for Lua."""
 
         if is_sequence(expr) and not isinstance(expr, (MatrixBase, MatrixExpr)):
@@ -1006,6 +1018,9 @@ class LuaCodeGen(CodeGen):
 
         # Lua supports multiple return values
         return_vals = []
+        if not return_vars is None:
+            return_vals += list(return_vars)
+
         output_args = []
         stmts = []
         for (i, expr) in enumerate(expressions):
@@ -1308,7 +1323,7 @@ def get_code_generator(language, project):
 
 def codegen(name_expr, language, prefix=None, project="project",
             to_files=False, header=True, empty=True, argument_sequence=None,
-            global_vars=None, local_vars=None, statements=None):
+            global_vars=None, local_vars=None, return_vars=None, statements=None):
     """Generate source code for expressions in a given language.
 
     Parameters
@@ -1364,6 +1379,10 @@ def codegen(name_expr, language, prefix=None, project="project",
 
     local_vars : iterable, optional
         Sequence of local variables used by the routine.  Variables
+        listed here will not show up as function arguments.
+
+    return_vars : iterable, optional
+        Sequence of returned variables for the routine.  Variables
         listed here will not show up as function arguments.
 
     Examples
@@ -1450,8 +1469,9 @@ def codegen(name_expr, language, prefix=None, project="project",
     # Construct Routines appropriate for this code_gen from (name, expr) pairs.
     routines = []
     for name, expr in name_expr:
-        routines.append(code_gen.routine(name, expr, argument_sequence, statements,
-                                         global_vars, local_vars=local_vars))
+        routines.append(code_gen.routine(name, expr, argument_sequence, statements, global_vars, \
+                                         local_vars=local_vars, \
+                                         return_vars=return_vars))
 
     # Write the code.
     return code_gen.write(routines, prefix, to_files, header, empty)

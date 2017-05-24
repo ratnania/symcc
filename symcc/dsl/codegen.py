@@ -1,6 +1,6 @@
 # coding: utf-8
 from symcc.types.ast import For, Assign
-from symcc.utilities.codegen import codegen
+from symcc.utilities.codegen import codegen, Result
 
 from sympy.core.symbol import Symbol
 from sympy.abc import x,y,i
@@ -313,21 +313,25 @@ class ValeCodegen(Codegen):
         return self._name
 
     def doprint(self, language):
-        args = self.args
-        local_vars = self.local_vars
+        args        = self.args
+        local_vars  = self.local_vars
+        return_vars = []
         if language in ["LUA"]:
             args.remove(Symbol("contribution"))
             local_vars.append(Symbol("contribution"))
+            return_vars.append(Result(Symbol("contribution")))
 
             [(f_name, f_code)] = codegen((self.name, self.body), language, \
                                          header=False, empty=True, \
                                          argument_sequence=set(args), \
-                                         local_vars=set(local_vars))
+                                         local_vars=set(local_vars), \
+                                         return_vars=return_vars)
         else:
             [(f_name, f_code), header] = codegen((self.name, self.body), language, \
                                                  header=False, empty=True, \
                                                  argument_sequence=set(args), \
-                                                 local_vars=set(local_vars))
+                                                 local_vars=set(local_vars), \
+                                                 return_vars=return_vars)
 
         return f_code
 
