@@ -354,7 +354,7 @@ class Routine(object):
 #                symbols.update(r.expr.free_symbols)
 
         for stmt in statements:
-            if not isinstance(stmt, (Assign, Equality)):
+            if not isinstance(stmt, (Assign, Equality, For)):
                 raise ValueError("Unknown Routine statement: %s" % stmt)
 #            symbols.update(stmt.expr.free_symbols)
 #            symbols.update(stmt.expr.free_symbols - set(arguments))
@@ -992,6 +992,7 @@ class LuaCodeGen(CodeGen):
 
         symbols = free_symbols - local_vars - global_vars
 
+
         # Lua supports multiple return values
         return_vals = []
         output_args = []
@@ -1045,6 +1046,8 @@ class LuaCodeGen(CodeGen):
                 if not(symbol in local_vars):
                     symbols.remove(symbol)
 
+            elif isinstance(expr, For):
+                stmts.append(expr)
             else:
                 # we have no name for this output
                 return_vals.append(Result(expr, name='out%d' % (i+1)))
@@ -1162,47 +1165,57 @@ class LuaCodeGen(CodeGen):
             if isinstance(arg, ResultBase) and not arg.dimensions:
                 dereference.append(arg.name)
 
-        variables = list(routine.statements) + routine.results
-
         results = []
         for result in routine.results:
             if isinstance(result, Result):
                 results.append(result.result_var)
             elif isinstance(result, Assign):
                 results.append(result.lhs)
+            elif isinstance(expr, For):
+                # look inside For statements, recursively
+                pass
             else:
                 raise ValueError("Unknown variable : %s" % result)
 
 
         # TODO for the moment, For is passed as a Result. must be changed, first
         # in the routine method...
-        print(">>>> results : " + str(results))
-        for i, result in enumerate(variables):
+        stmts = list(routine.statements) + routine.results
+        print(">>>> routine.results    : " + str(routine.results))
+        print(">>>> routine.local_vars : " + str(routine.local_vars))
+        for i, result in enumerate(stmts):
             expr      = None
             assign_to = None
             if isinstance(result, Result):
                 assign_to = result.result_var
                 expr      = result.expr
-                if not isinstance(expr, For):
-                    returns.append(str(result.result_var))
 
+                returns.append(str(result.result_var))
+
+                lua_expr = lua_code(expr, assign_to=assign_to, human=False)
+
+                if assign_to in results:
+                    code_lines.append("%s\n" % lua_expr);
+                else:
+                    code_lines.append("local %s\n" % lua_expr);
             elif isinstance(result, Assign):
                 assign_to = result.lhs
                 expr      = result.rhs
+
+                lua_expr = lua_code(expr, assign_to=assign_to, human=False)
+
+                if assign_to in results:
+                    code_lines.append("%s\n" % lua_expr);
+                else:
+                    code_lines.append("local %s\n" % lua_expr);
+            elif isinstance(result, For):
+                print(">>>> " + str(result))
+                lua_expr = lua_code(result, human=False, local_vars=routine.local_vars)
+                code_lines.append("%s\n" % lua_expr);
+                pass
             else:
                 raise ValueError("Unknown variable : %s" % result)
 
-            print(">>>> " + str(assign_to) + "   " + str(expr))
-
-            if isinstance(expr, For):
-                lua_expr = lua_code(expr, human=False)
-            else:
-                lua_expr = lua_code(expr, assign_to=assign_to, human=False)
-
-            if assign_to in results:
-                code_lines.append("%s\n" % lua_expr);
-            else:
-                code_lines.append("local %s\n" % lua_expr);
 
         if len(returns) == 1:
             returns = ['return ' + str(returns[0]) ]

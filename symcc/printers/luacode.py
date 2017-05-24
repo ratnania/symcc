@@ -203,6 +203,7 @@ class LuaCodePrinter(CodePrinter):
         'full_prec': 'auto',
         'precision': 15,
         'user_functions': {},
+        'local_vars': {},
         'human': True,
         'contract': True,
         'dereference': set(),
@@ -218,6 +219,7 @@ class LuaCodePrinter(CodePrinter):
         self.known_functions.update(userfuncs)
         self._dereference = set(settings.get('dereference', []))
         self.reserved_words = set(reserved_words)
+        self.local_vars = settings.get('local_vars', {})
 
     def _rate_index_position(self, p):
         return p*5
@@ -226,7 +228,7 @@ class LuaCodePrinter(CodePrinter):
         return "%s" % codestring
 
     def _get_comment(self, text):
-        return "// %s" % text
+        return "-- %s" % text
 
     def _declare_number_const(self, name, value):
         return "const %s: f64 = %s" % (name, value)
@@ -327,6 +329,7 @@ class LuaCodePrinter(CodePrinter):
             return ret
 
     def _print_Integer(self, expr, _type=False):
+        # TODO use ceiling since Lua does not have an Integer type.
         ret = super(LuaCodePrinter, self)._print_Integer(expr)
         if _type:
             return ret + '_i32'
@@ -497,6 +500,16 @@ class LuaCodePrinter(CodePrinter):
     def _print_Return(self, expr):
         return 'return {0}'.format(self._print(expr.expr))
 
+    def _print_Assign(self, expr):
+        lhs_code = self._print(expr.lhs)
+        rhs_code = self._print(expr.rhs)
+
+        local_vars = list(self.local_vars)
+        if expr.lhs in local_vars:
+            return ("local %s = %s" % (lhs_code, rhs_code))
+        else:
+            return self._get_statement("%s = %s" % (lhs_code, rhs_code))
+
     def _print_AugAssign(self, expr):
         lhs_code = self._print(expr.lhs)
         op = expr.op._symbol
@@ -581,6 +594,9 @@ def lua_code(expr, assign_to=None, **settings):
         Setting contract=False will not generate loops, instead the user is
         responsible to provide values for the indices in the code.
         [default=True].
+    locals: dict
+        A dictionary that contains the list of local symbols. these symbols will
+        be preceeded by local for their first assignment.
 
     Examples
     ========
