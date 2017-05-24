@@ -55,7 +55,7 @@ def test_dsl():
 
     # ... TODO get dim from domain
     dim = 3
-    kernel = ValeCodegen(l1, dim, name="kernel", trial=True)
+    kernel = ValeCodegen(a1, dim, name="kernel", trial=True)
 #    print (kernel.doprint("F95"))
     print (kernel.doprint("LUA"))
     # ...
