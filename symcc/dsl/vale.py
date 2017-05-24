@@ -7,6 +7,17 @@ from symcc.dsl.core import Basic, Parser
 
 __all__ = ["ValeParser"]
 
+# ...
+def _get_by_name(ast, name):
+    """
+    Returns an object from the AST by giving its name.
+    """
+    for token in ast.declarations:
+        if token.name == name:
+            return token
+    return None
+# ...
+
 
 # Global variable namespace
 namespace = {}
@@ -70,17 +81,9 @@ class Function(object):
         return Symbol(self.name)
 
 
-class LinearForm(object):
-    _available_attributs = ["dim"]
-
+class Form(object):
     def __init__(self, **kwargs):
-        self.name       = kwargs.pop('name')
-        self.args       = kwargs.pop('args')
-        self.domain     = kwargs.pop('domain')
-        self.expression = kwargs.pop('expression')
         self._attributs = {}
-
-        namespace[self.name] = self
 
     @property
     def attributs(self):
@@ -93,6 +96,20 @@ class LinearForm(object):
         else:
             raise ValueError("Unknown attribut : %s" % attribut)
 
+
+class LinearForm(Form):
+    _available_attributs = ["dim"]
+
+    def __init__(self, **kwargs):
+        self.name       = kwargs.pop('name')
+        self.args       = kwargs.pop('args')
+        self.domain     = kwargs.pop('domain')
+        self.expression = kwargs.pop('expression')
+
+        namespace[self.name] = self
+
+        super(LinearForm, self).__init__(**kwargs)
+
     def to_sympy(self):
         for f in self.args.functions:
             stack[f] = f
@@ -104,8 +121,8 @@ class LinearForm(object):
 
         return expr
 
-class BilinearForm(object):
-    _available_attributs = [""]
+class BilinearForm(Form):
+    _available_attributs = ["dim"]
 
     def __init__(self, **kwargs):
         self.name       = kwargs.pop('name')
@@ -113,13 +130,10 @@ class BilinearForm(object):
         self.args_trial = kwargs.pop('args_trial')
         self.domain     = kwargs.pop('domain')
         self.expression = kwargs.pop('expression')
-        self._attributs = {}
 
         namespace[self.name] = self
 
-    @property
-    def attributs(self):
-        return self._attributs
+        super(BilinearForm, self).__init__(**kwargs)
 
     def to_sympy(self):
         args = self.args_test.functions + self.args_trial.functions
@@ -283,3 +297,23 @@ class ValeParser(Parser):
 
         super(ValeParser, self).__init__(filename = "grammar/vale.tx", \
                                          classes=classes)
+
+    def parse_from_file(self, filename):
+        ast = super(ValeParser, self).parse_from_file(filename)
+
+        # ... annotating the AST
+        for token in ast.declarations:
+            if isinstance(token, LinearForm):
+                space  = _get_by_name(ast, token.args.space)
+                domain = _get_by_name(ast, space.domain)
+
+                token.set("dim", domain.dim)
+            elif isinstance(token, BilinearForm):
+                space_test  = _get_by_name(ast, token.args_test.space)
+                space_trial = _get_by_name(ast, token.args_trial.space)
+                domain      = _get_by_name(ast, space_test.domain)
+
+                token.set("dim", domain.dim)
+        # ...
+
+        return ast

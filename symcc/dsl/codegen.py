@@ -9,17 +9,6 @@ from sympy.core.sympify import sympify
 
 __all__ = ["ValeCodegen"]
 
-# ...
-def _get_by_name(ast, name):
-    """
-    Returns an object from the AST by giving its name.
-    """
-    for token in ast.declarations:
-        if token.name == name:
-            return token
-    return None
-# ...
-
 
 class Codegen(object):
     def __init__(self, body, local_vars=None, args=None):
@@ -294,16 +283,7 @@ class ValeCodegen(Codegen):
                     _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
 
             _name = "kernel_" + expr.name
-
-            if not(ast is None):
-                space  = _get_by_name(ast, expr.args.space)
-                domain = _get_by_name(ast, space.domain)
-
-                _dim = domain.dim
-            elif not(dim is None):
-                _dim = dim
-            else:
-                raise ValueError("ast or dim must be provided.")
+            _dim = expr.attributs["dim"]
 
         elif isinstance(expr, BilinearForm):
             _expr = expr.to_sympy()
@@ -320,17 +300,8 @@ class ValeCodegen(Codegen):
                     _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
 
             _name  = "kernel_" + expr.name
+            _dim   = expr.attributs["dim"]
             _trial = True
-
-            if not(ast is None):
-                space  = _get_by_name(ast, expr.args_test.space)
-                domain = _get_by_name(ast, space.domain)
-
-                _dim = domain.dim
-            elif not(dim is None):
-                _dim = dim
-            else:
-                raise ValueError("ast or dim must be provided.")
 
         else:
             if not(dim is None) or not(name is None):
