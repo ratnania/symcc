@@ -269,8 +269,26 @@ class ValeCodegen(Codegen):
         _expr = None
         if isinstance(expr, LinearForm):
             _expr = expr.to_sympy()
+            for f in expr.args.functions:
+                B = "Ni"
+                _expr = _expr.subs({Symbol(f): Symbol(B + "_0")})
+                for d in ["x", "y", "z"][:dim]:
+                    _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
+
         elif isinstance(expr, BilinearForm):
             _expr = expr.to_sympy()
+            for f in expr.args_test.functions:
+                B = "Ni"
+                _expr = _expr.subs({Symbol(f): Symbol(B + "_0")})
+                for d in ["x", "y", "z"][:dim]:
+                    _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
+
+            for f in expr.args_trial.functions:
+                B = "Nj"
+                _expr = _expr.subs({Symbol(f): Symbol(B + "_0")})
+                for d in ["x", "y", "z"][:dim]:
+                    _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
+
         else:
             _expr = expr
 
