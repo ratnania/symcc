@@ -1219,10 +1219,10 @@ class LuaCodeGen(CodeGen):
             _returns = []
             if isinstance(expr, Result) and \
                (not expr.result_var in routine.local_vars):
-                _returns.append(expr.result_var)
+                _returns.append(str(expr.result_var))
             elif isinstance(expr, Assign) and \
                (not expr.lhs in routine.local_vars):
-                _returns.append(expr.lhs)
+                _returns.append(str(expr.lhs))
             elif isinstance(expr, For):
                 # look inside For statements, recursively
                 for _expr in expr.body:
