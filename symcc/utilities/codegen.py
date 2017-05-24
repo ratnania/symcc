@@ -1165,32 +1165,33 @@ class LuaCodeGen(CodeGen):
             if isinstance(arg, ResultBase) and not arg.dimensions:
                 dereference.append(arg.name)
 
-        results = []
-        for result in routine.results:
-            if isinstance(result, Result):
-                results.append(result.result_var)
-            elif isinstance(result, Assign):
-                results.append(result.lhs)
+        def _construct_results(expr):
+            _results = []
+            if isinstance(expr, Result):
+                _results.append(expr.result_var)
+            elif isinstance(expr, Assign):
+                _results.append(expr.lhs)
             elif isinstance(expr, For):
                 # look inside For statements, recursively
-                pass
+                for _expr in expr.body:
+                    _results += _construct_results(_expr)
             else:
-                raise ValueError("Unknown variable : %s" % result)
+                raise ValueError("Unknown variable : %s" % expr)
+            return _results
 
+        results = []
+        for e in routine.results + routine.statements:
+            results += _construct_results(e)
 
         # TODO for the moment, For is passed as a Result. must be changed, first
         # in the routine method...
         stmts = list(routine.statements) + routine.results
-        print(">>>> routine.results    : " + str(routine.results))
-        print(">>>> routine.local_vars : " + str(routine.local_vars))
         for i, result in enumerate(stmts):
             expr      = None
             assign_to = None
             if isinstance(result, Result):
                 assign_to = result.result_var
                 expr      = result.expr
-
-                returns.append(str(result.result_var))
 
                 lua_expr = lua_code(expr, assign_to=assign_to, human=False)
 
@@ -1209,13 +1210,30 @@ class LuaCodeGen(CodeGen):
                 else:
                     code_lines.append("local %s\n" % lua_expr);
             elif isinstance(result, For):
-                print(">>>> " + str(result))
                 lua_expr = lua_code(result, human=False, local_vars=routine.local_vars)
                 code_lines.append("%s\n" % lua_expr);
-                pass
             else:
                 raise ValueError("Unknown variable : %s" % result)
 
+        def _construct_returns(expr):
+            _returns = []
+            if isinstance(expr, Result) and \
+               (not expr.result_var in routine.local_vars):
+                _returns.append(expr.result_var)
+            elif isinstance(expr, Assign) and \
+               (not expr.lhs in routine.local_vars):
+                _returns.append(expr.lhs)
+            elif isinstance(expr, For):
+                # look inside For statements, recursively
+                for _expr in expr.body:
+                    _returns += _construct_returns(_expr)
+            return _returns
+
+        returns = []
+        for e in routine.results + routine.statements:
+            returns += _construct_returns(e)
+
+        returns = list(set(returns))
 
         if len(returns) == 1:
             returns = ['return ' + str(returns[0]) ]
