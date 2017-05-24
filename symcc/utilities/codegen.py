@@ -1103,7 +1103,6 @@ class LuaCodeGen(CodeGen):
                     new_args.append(InputArgument(symbol))
             arg_list = new_args
 
-        print(">>>> return_vals : " +str(return_vals))
         return Routine(name, arg_list, return_vals, stmts, local_vars, global_vars)
 
     def _get_header(self):
