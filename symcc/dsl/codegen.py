@@ -259,7 +259,21 @@ class Formulation(Codegen):
 
 
 class ValeCodegen(Codegen):
+    """Code generation for the Vale Grammar"""
     def __init__(self, expr, dim, name, trial=False):
+        """
+        expr: sympy.expression or LinearForm or BilinearForm
+        """
+        from symcc.dsl.vale import LinearForm, BilinearForm
+
+        _expr = None
+        if isinstance(expr, LinearForm):
+            _expr = expr.to_sympy()
+        elif isinstance(expr, BilinearForm):
+            _expr = expr.to_sympy()
+        else:
+            _expr = expr
+
         self._name = name
 
         stmts  = []
@@ -269,7 +283,7 @@ class ValeCodegen(Codegen):
             stmts += [TrialFunction(dim)]
 
         stmts += [Pullback(dim, trial=trial), \
-                  Formulation(expr)]
+                  Formulation(_expr)]
 
         body       = []
         local_vars = []
