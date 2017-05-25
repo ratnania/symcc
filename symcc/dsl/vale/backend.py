@@ -122,6 +122,8 @@ class ClappAST(object):
         except:
             language = "LUA"
 
+        p_dim = mapping.p_dim
+
         tokens     = ast_to_dict(ast)
 
         _dict = {}
@@ -140,7 +142,7 @@ class ClappAST(object):
             elif isinstance(token, Function):
                 # TODO how to set args
                 # TODO use expression of function
-                args = ["x"]
+                args = ["x", "y", "z"][:p_dim]
                 X = ClappFunction(name=token.name, \
                                   expr="x-x", \
                                   args=args)
