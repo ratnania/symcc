@@ -56,26 +56,19 @@ def test_model():
     # ...
     def run(filename):
         # ...
-        from caid.cad_geometry import square
-        geometry = square()
+        from caid.cad_geometry import line
+        geometry = line()
 
         from clapp.spl.mapping import Mapping
         mapping = Mapping(geometry=geometry)
         # ...
 
-        # ...
-        import os
-
-        cmd = "mkdir -p output"
-        os.system(cmd)
-        # ...
-
         # ... creates discretization parameters
         from clapp.disco.parameters.bspline import BSpline
 
-        bspline_params = BSpline([8,8], [2,2], \
-                                 bc_min=[0,0], \
-                                 bc_max=[0,0])
+        bspline_params = BSpline([8], [2], \
+                                 bc_min=[0], \
+                                 bc_max=[0])
         # ...
 
         # ... create a context from discretization
@@ -93,7 +86,7 @@ def test_model():
         # ... accessing the pde declarations
         V           = pde["V"]
         u           = pde["u"]
-        form_a      = pde["a"]
+#        form_a      = pde["a"]
         form_b      = pde["b"]
         # ...
 
@@ -112,7 +105,26 @@ def test_model():
         # ...
     # ...
 
+
+    import clapp.common.utils      as clapp_utils
+
+    # ... initializing Clapp
+    clapp_utils.initialize()
+    # ...
+
+    import os
+
+    cmd = "rm -rf input"
+    os.system(cmd)
+
     run(filename="inputs/example_1.vl")
+
+    cmd = "rm -rf input"
+    os.system(cmd)
+
+    # ... Finalizing Clapp
+    clapp_utils.finalize()
+    # ...
 
 ######################################
 if __name__ == "__main__":

@@ -4,4 +4,4 @@ Field(space=V)                  :: u
 
 b(phi::V) := < phi >_Omega 
 
-a(phi::V, psi::V) := < dx(phi) * dx(psi) >_Omega
+#a(phi::V, psi::V) := < dx(phi) * dx(psi) >_Omega

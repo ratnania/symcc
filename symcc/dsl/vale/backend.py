@@ -170,9 +170,12 @@ class ClappAST(object):
                 # ...
                 kernel_name = "kernel_" + str(token.name)
                 filename    = ".clapp.lua"
+                print(">>>> kernel_name : " + kernel_name)
+                print(">>>> filename    : " + filename)
                 # ...
 
                 # ... generates Lua kernel
+                #     TODO move parts of this code
                 code = ValeCodegen(token).doprint(language)
 
                 header = code.split(")")[0] + ")\n"
@@ -181,9 +184,9 @@ class ClappAST(object):
                 meta = "setmetatable(_ENV, { __index=math }) " + " \n"
                 new_code = header + meta + body
 
-                f = open(filename, "w")
-                f.write(new_code)
-                f.close()
+#                f = open(filename, "w")
+#                f.write(new_code)
+#                f.close()
                 # ...
 
                 # ... creates the matrix object
@@ -202,9 +205,7 @@ class ClappAST(object):
                 # ...
 
                 # ...
-                if (filename is not None) and (kernel_name is not None):
-                    assembler.set_kernel(filename=filename, \
-                                         rhs_name=kernel_name)
+                assembler.set_kernel(filename=filename, rhs_name=kernel_name)
                 # ...
 
                 # ...
