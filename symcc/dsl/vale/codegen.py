@@ -269,10 +269,12 @@ class ValeCodegen(Codegen):
         """
         from symcc.dsl.vale import LinearForm, BilinearForm
 
-        _expr  = None
-        _name  = None
-        _dim   = None
-        _trial = False
+        _expr   = None
+        _name   = None
+        _dim    = None
+        _trial  = False
+        _n_rows = None
+        _n_cols = None
 
         if isinstance(expr, LinearForm):
             _expr = expr.to_sympy()
@@ -283,7 +285,10 @@ class ValeCodegen(Codegen):
                     _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
 
             _name = "kernel_" + expr.name
-            _dim = expr.attributs["dim"]
+            _dim  = expr.attributs["dim"]
+
+            # TODO get n_rows from LinearForm
+            _n_rows = Symbol('n_rows', integer=True)
 
         elif isinstance(expr, BilinearForm):
             _expr = expr.to_sympy()
@@ -302,6 +307,10 @@ class ValeCodegen(Codegen):
             _name  = "kernel_" + expr.name
             _dim   = expr.attributs["dim"]
             _trial = True
+
+            # TODO get n_rows,n_cols from BilinearForm
+            _n_rows = Symbol('n_rows', integer=True)
+            _n_cols = Symbol('n_cols', integer=True)
 
         else:
             if not(dim is None) or not(name is None):
@@ -326,6 +335,12 @@ class ValeCodegen(Codegen):
         body       = []
         local_vars = []
         args       = []
+
+        if not(_n_rows is None):
+            args.append(_n_rows)
+
+        if not(_n_cols is None):
+            args.append(_n_cols)
 
         for stmt in stmts:
             if isinstance(stmt, Codegen):

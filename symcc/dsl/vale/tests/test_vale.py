@@ -38,19 +38,20 @@ def test_dsl():
     # ...
 
     # ...
-    f  = get_by_name(ast, "f")
-    l1 = get_by_name(ast, "l1")
-    a1 = get_by_name(ast, "a1")
+    l = get_by_name(ast, "l")
+    a = get_by_name(ast, "a")
     # ...
 
     # ... TODO get dim from domain
-#    kernel = ValeCodegen(l1)
-    kernel = ValeCodegen(a1)
-#    print (kernel.doprint("F95"))
-    print (kernel.doprint("LUA"))
+    for f in [l, a]:
+        print("============ " + f.name + " ============")
+        kernel = ValeCodegen(f)
+
+#        print (kernel.doprint("F95"))
+        print (kernel.doprint("LUA"))
     # ...
 
-def test_backend():
+def test_model():
 
     # ...
     def run(filename):
@@ -89,8 +90,25 @@ def test_backend():
                               context=context, mapping=mapping)
         # ...
 
+        # ... accessing the pde declarations
+        V           = pde["V"]
+        u           = pde["u"]
+        form_a      = pde["a"]
+        form_b      = pde["b"]
         # ...
-        print pde
+
+        # ...
+#        assembler_a = form_a.assembler
+#        matrix      = form_a.matrix
+        assembler_b = form_b.assembler
+        rhs         = form_b.vector
+
+#        assembler_a.assemble()
+        assembler_b.assemble()
+        # ...
+
+        # ...
+        rhs.export("rhs.txt")
         # ...
     # ...
 
@@ -100,4 +118,4 @@ def test_backend():
 if __name__ == "__main__":
 #    test_vale()
 #    test_dsl()
-    test_backend()
+    test_model()

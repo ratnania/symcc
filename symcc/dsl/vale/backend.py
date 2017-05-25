@@ -1,9 +1,10 @@
 # coding: utf-8
 
-from symcc.dsl.vale.parser import ValeParser
-from symcc.dsl.vale.parser import ast_to_dict
-from symcc.dsl.vale.syntax import (LinearForm, BilinearForm, \
-                                   Domain, Space, Field, Function, Real)
+from symcc.dsl.vale.codegen import ValeCodegen
+from symcc.dsl.vale.parser  import ValeParser
+from symcc.dsl.vale.parser  import ast_to_dict
+from symcc.dsl.vale.syntax  import (LinearForm, BilinearForm, \
+                                    Domain, Space, Field, Function, Real)
 
 
 __all__ = ["construct_model"]
@@ -114,6 +115,11 @@ class ClappAST(object):
         except:
             ddm_params = context.ddm_params
 
+        try:
+            language = settings["language"]
+        except:
+            language = "LUA"
+
         tokens     = ast_to_dict(ast)
         print ast
 
@@ -164,6 +170,20 @@ class ClappAST(object):
                 # ...
                 kernel_name = "kernel_" + str(token.name)
                 filename    = ".clapp.lua"
+                # ...
+
+                # ... generates Lua kernel
+                code = ValeCodegen(token).doprint(language)
+
+                header = code.split(")")[0] + ")\n"
+                body   = code[len(header):]
+
+                meta = "setmetatable(_ENV, { __index=math }) " + " \n"
+                new_code = header + meta + body
+
+                f = open(filename, "w")
+                f.write(new_code)
+                f.close()
                 # ...
 
                 # ... creates the matrix object
