@@ -185,7 +185,7 @@ class FactorSigned(ExpressionElement):
 
     @property
     def expr(self):
-        print "> FactorSigned "
+#        print "> FactorSigned "
         expr = self.op.expr
         return -expr if self.sign == '-' else expr
 
@@ -198,7 +198,7 @@ class FactorUnary(ExpressionElement):
 
     @property
     def expr(self):
-        print "> FactorUnary "
+#        print "> FactorUnary "
         expr = self.op.expr
         # TODO gets dim from Domain
         dim = 2
@@ -235,8 +235,8 @@ class FactorBinary(ExpressionElement):
 
     @property
     def expr(self):
-        print "> FactorBinary "
-        print self.op
+#        print "> FactorBinary "
+#        print self.op
 
         expr_l = self.op[0].expr
         expr_r = self.op[1].expr
@@ -257,7 +257,7 @@ class FactorBinary(ExpressionElement):
 class Term(ExpressionElement):
     @property
     def expr(self):
-        print "> Term "
+#        print "> Term "
         ret = self.op[0].expr
         for operation, operand in zip(self.op[1::2], self.op[2::2]):
             if operation == '*':
@@ -270,7 +270,7 @@ class Term(ExpressionElement):
 class Expression(ExpressionElement):
     @property
     def expr(self):
-        print "> Expression "
+#        print "> Expression "
         ret = self.op[0].expr
         for operation, operand in zip(self.op[1::2], self.op[2::2]):
             if operation == '+':
@@ -283,7 +283,7 @@ class Expression(ExpressionElement):
 class Operand(ExpressionElement):
     @property
     def expr(self):
-        print "> Operand "
+#        print "> Operand "
         op = self.op[0]
         if type(op) in {int, float}:
             return op

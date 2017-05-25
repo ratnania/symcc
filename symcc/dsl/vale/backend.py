@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import os
 from symcc.dsl.vale.codegen import ValeCodegen
 from symcc.dsl.vale.parser  import ValeParser
 from symcc.dsl.vale.parser  import ast_to_dict
@@ -107,8 +108,9 @@ class ClappAST(object):
         mapping: clapp.spl.mapping.Mapping
           a spl mapping object
         """
-        context = settings["context"]
-        mapping = settings["mapping"]
+        context   = settings["context"]
+        mapping   = settings["mapping"]
+        directory = settings["directory"]
 
         try:
             ddm_params = settings["ddm_params"]
@@ -121,11 +123,9 @@ class ClappAST(object):
             language = "LUA"
 
         tokens     = ast_to_dict(ast)
-        print ast
 
         _dict = {}
         for token in ast.declarations:
-            print token
             if isinstance(token, Domain):
                 print ("> No translation for Domain node. TODO")
             elif isinstance(token, Space):
@@ -169,9 +169,7 @@ class ClappAST(object):
 
                 # ...
                 kernel_name = "kernel_" + str(token.name)
-                filename    = "kernels.lua"
-                print(">>>> kernel_name : " + kernel_name)
-                print(">>>> filename    : " + filename)
+                filename    = os.path.join(directory, "kernels.lua")
                 # ...
 
                 # ... generates Lua kernel
@@ -237,9 +235,7 @@ class ClappAST(object):
 
                 # ...
                 kernel_name = "kernel_" + str(token.name)
-                filename    = "kernels.lua"
-                print(">>>> kernel_name : " + kernel_name)
-                print(">>>> filename    : " + filename)
+                filename    = os.path.join(directory, "kernels.lua")
                 # ...
 
                 # ... generates Lua kernel
@@ -317,6 +313,22 @@ def construct_model(ast_or_filename, backend="clapp", **settings):
             # ...
         else:
             ast = ast_or_filename
+
+        # ...
+        folder = "." + str(backend)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        for the_file in os.listdir(folder):
+            file_path = os.path.join(folder, the_file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                print(e)
+
+        settings["directory"] = folder
+        # ...
 
         if backend.lower() == "clapp":
             return ClappAST(ast, **settings)

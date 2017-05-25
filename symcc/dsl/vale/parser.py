@@ -81,9 +81,9 @@ class ValeParser(Parser):
                 token.set("user_functions", user_functions)
                 token.set("user_constants", user_constants)
 
-                print("> FIELDS    : " + str(token.attributs["user_fields"]))
-                print("> FUNCTIONS : " + str(token.attributs["user_functions"]))
-                print("> CONSTANTS : " + str(token.attributs["user_constants"]))
+#                print("> FIELDS    : " + str(token.attributs["user_fields"]))
+#                print("> FUNCTIONS : " + str(token.attributs["user_functions"]))
+#                print("> CONSTANTS : " + str(token.attributs["user_constants"]))
 
             elif isinstance(token, BilinearForm):
                 user_fields    = []
@@ -110,9 +110,9 @@ class ValeParser(Parser):
                 token.set("user_functions", user_functions)
                 token.set("user_constants", user_constants)
 
-                print("> FIELDS    : " + str(token.attributs["user_fields"]))
-                print("> FUNCTIONS : " + str(token.attributs["user_functions"]))
-                print("> CONSTANTS : " + str(token.attributs["user_constants"]))
+#                print("> FIELDS    : " + str(token.attributs["user_fields"]))
+#                print("> FUNCTIONS : " + str(token.attributs["user_functions"]))
+#                print("> CONSTANTS : " + str(token.attributs["user_constants"]))
         # ...
 
         return ast
