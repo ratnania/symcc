@@ -94,6 +94,7 @@ class Form(object):
 
 class LinearForm(Form):
     _available_attributs = ["dim", \
+                            "space", \
                             "user_fields", \
                             "user_functions", \
                             "user_constants"]
@@ -108,6 +109,12 @@ class LinearForm(Form):
 
         super(LinearForm, self).__init__(**kwargs)
 
+        self.set("user_fields",    [])
+        self.set("user_functions", [])
+        self.set("user_constants", [])
+
+        self.set("space", self.args.space)
+
     def to_sympy(self):
         for f in self.args.functions:
             stack[f] = f
@@ -121,6 +128,8 @@ class LinearForm(Form):
 
 class BilinearForm(Form):
     _available_attributs = ["dim", \
+                            "space_test", \
+                            "space_trial", \
                             "user_fields", \
                             "user_functions", \
                             "user_constants"]
@@ -135,6 +144,13 @@ class BilinearForm(Form):
         namespace[self.name] = self
 
         super(BilinearForm, self).__init__(**kwargs)
+
+        self.set("user_fields",    [])
+        self.set("user_functions", [])
+        self.set("user_constants", [])
+
+        self.set("space_test",  self.args_test.space)
+        self.set("space_trial", self.args_trial.space)
 
     def to_sympy(self):
         args = self.args_test.functions + self.args_trial.functions

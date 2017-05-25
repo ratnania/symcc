@@ -11,7 +11,7 @@ from symcc.dsl.vale.syntax import (Vale, \
                                    Domain, Space, Field, Function, Real)
 
 
-__all__ = ["ValeParser"]
+__all__ = ["ValeParser", "ast_to_dict"]
 
 # ...
 def _get_by_name(ast, name):
@@ -22,6 +22,17 @@ def _get_by_name(ast, name):
         if token.name == name:
             return token
     return None
+# ...
+
+# ...
+def ast_to_dict(ast):
+    """
+    Returns an object from the AST by giving its name.
+    """
+    tokens = {}
+    for token in ast.declarations:
+        tokens[token.name] = token
+    return tokens
 # ...
 
 # User friendly parser
@@ -59,11 +70,11 @@ class ValeParser(Parser):
                 for symbol in free_symbols:
                     var = _get_by_name(ast, str(symbol))
                     if isinstance(var, Field):
-                        user_fields.append(var)
+                        user_fields.append(var.name)
                     elif isinstance(var, Function):
-                        user_functions.append(var)
+                        user_functions.append(var.name)
                     elif isinstance(var, Real):
-                        user_constants.append(var)
+                        user_constants.append(var.name)
 
                 token.set("dim", domain.dim)
                 token.set("user_fields", user_fields)
@@ -88,11 +99,11 @@ class ValeParser(Parser):
                 for symbol in free_symbols:
                     var = _get_by_name(ast, str(symbol))
                     if isinstance(var, Field):
-                        user_fields.append(var)
+                        user_fields.append(var.name)
                     elif isinstance(var, Function):
-                        user_functions.append(var)
+                        user_functions.append(var.name)
                     elif isinstance(var, Real):
-                        user_constants.append(var)
+                        user_constants.append(var.name)
 
                 token.set("dim", domain.dim)
                 token.set("user_fields", user_fields)

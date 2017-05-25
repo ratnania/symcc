@@ -1,8 +1,8 @@
 # coding: utf-8
 
-from symcc.printers import fcode
 from symcc.dsl.vale import ValeCodegen
 from symcc.dsl.vale import ValeParser
+from symcc.dsl.vale import construct_model
 
 from sympy import S
 from sympy.core.sympify import sympify
@@ -50,7 +50,54 @@ def test_dsl():
     print (kernel.doprint("LUA"))
     # ...
 
+def test_backend():
+
+    # ...
+    def run(filename):
+        # ...
+        from caid.cad_geometry import square
+        geometry = square()
+
+        from clapp.spl.mapping import Mapping
+        mapping = Mapping(geometry=geometry)
+        # ...
+
+        # ...
+        import os
+
+        cmd = "mkdir -p output"
+        os.system(cmd)
+        # ...
+
+        # ... creates discretization parameters
+        from clapp.disco.parameters.bspline import BSpline
+
+        bspline_params = BSpline([8,8], [2,2], \
+                                 bc_min=[0,0], \
+                                 bc_max=[0,0])
+        # ...
+
+        # ... create a context from discretization
+        from clapp.fema.context        import Context
+
+        context = Context(dirname="input", \
+                          discretization_params=bspline_params)
+        # ...
+
+        # ...
+        pde = construct_model(filename, backend="clapp", \
+                              context=context, mapping=mapping)
+        # ...
+
+        # ...
+        print pde
+        # ...
+    # ...
+
+    run(filename="inputs/example_1.vl")
+
 ######################################
 if __name__ == "__main__":
-    test_dsl()
 #    test_vale()
+#    test_dsl()
+    test_backend()
