@@ -5,7 +5,7 @@ from sympy import Symbol, sympify
 from symcc.dsl.utilities import grad, d_var, inner, outer, cross, dot
 from textx.metamodel import metamodel_from_str
 
-__all__ = ["Basic", "Parser"]
+__all__ = ["Basic", "Parser", "Codegen"]
 
 # Global variable namespace
 namespace = {}
@@ -62,3 +62,29 @@ class Parser(object):
         # ... parse the DSL code
         return self.parse(instructions)
         # ...
+
+
+class Codegen(object):
+    def __init__(self, body, local_vars=None, args=None):
+
+        self._body = body
+
+        self._local_vars = local_vars
+        if local_vars is None:
+            self._local_vars = []
+
+        self._args = args
+        if args is None:
+            self._args = []
+
+    @property
+    def body(self):
+        return self._body
+
+    @property
+    def local_vars(self):
+        return self._local_vars
+
+    @property
+    def args(self):
+        return self._args

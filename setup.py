@@ -2,7 +2,7 @@
 #! /usr/bin/python
 
 import sys
-from setuptools import setup
+from setuptools import setup, find_packages
 
 NAME    = 'symcc'
 VERSION = '0.1'
@@ -26,29 +26,15 @@ setup_args = dict(
 #    download_url     = URL+'/tarball/master',
 )
 
-
 # ...
-packages=[  'symcc' \
-          , 'symcc.dsl' \
-          , 'symcc.printers' \
-          , 'symcc.types' \
-          , 'symcc.utilities' \
-         ]
-
-package_dir={  'symcc':                'symcc' \
-              ,'symcc.dsl':            'symcc/dsl' \
-              ,'symcc.printers':       'symcc/printers' \
-              ,'symcc.types':          'symcc/types' \
-              ,'symcc.utilities':      'symcc/utilities' \
-              ,}
+packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
 # ...
-
 
 def setup_package():
     if 'setuptools' in sys.modules:
         setup_args['install_requires'] = ['numpy']
+
     setup(  packages = packages \
-          , package_dir=package_dir \
           , include_package_data = True \
           , **setup_args)
 
