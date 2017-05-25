@@ -38,13 +38,13 @@ def test_dsl():
     # ...
 
     # ...
-    l = get_by_name(ast, "l")
+    b = get_by_name(ast, "b")
     a = get_by_name(ast, "a")
     # ...
 
     # ... TODO get dim from domain
-    for f in [l, a]:
-        print("============ " + f.name + " ============")
+    for f in [b, a]:
+        print("============ " + str(f) + " ============")
         kernel = ValeCodegen(f)
 
 #        print (kernel.doprint("F95"))
@@ -86,22 +86,23 @@ def test_model():
         # ... accessing the pde declarations
         V           = pde["V"]
         u           = pde["u"]
-#        form_a      = pde["a"]
+        form_a      = pde["a"]
         form_b      = pde["b"]
         # ...
 
         # ...
-#        assembler_a = form_a.assembler
-#        matrix      = form_a.matrix
+        assembler_a = form_a.assembler
+        matrix      = form_a.matrix
         assembler_b = form_b.assembler
         rhs         = form_b.vector
 
-#        assembler_a.assemble()
+        assembler_a.assemble()
         assembler_b.assemble()
         # ...
 
         # ...
-        rhs.export("rhs.txt")
+        matrix.export("matrix")
+#        rhs.export("rhs.txt")
         # ...
     # ...
 
