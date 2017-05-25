@@ -27,7 +27,7 @@ def _get_by_name(ast, name):
 # User friendly parser
 
 class ValeParser(Parser):
-    def __init__(self):
+    def __init__(self, filename=None):
         classes = [Vale, \
                    Expression, Term, Operand, \
                    FactorSigned, FactorUnary, FactorBinary, \
@@ -35,7 +35,10 @@ class ValeParser(Parser):
                    Domain, Space, Field, Function, Real \
                    ]
 
-        super(ValeParser, self).__init__(filename = "vale/grammar.tx", \
+        if filename is None:
+            filename = "vale/grammar.tx"
+
+        super(ValeParser, self).__init__(filename = filename, \
                                          classes=classes)
 
     def parse_from_file(self, filename):
