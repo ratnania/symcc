@@ -35,7 +35,7 @@ class ValeParser(Parser):
                    Domain, Space, Field, Function, Real \
                    ]
 
-        super(ValeParser, self).__init__(filename = "grammar/vale.tx", \
+        super(ValeParser, self).__init__(filename = "vale/grammar.tx", \
                                          classes=classes)
 
     def parse_from_file(self, filename):
