@@ -88,6 +88,7 @@ def test_model():
         u           = pde["u"]
         form_a      = pde["a"]
         form_b      = pde["b"]
+        f           = pde["f"]
         # ...
 
         # ...
@@ -95,17 +96,64 @@ def test_model():
         matrix      = form_a.matrix
         assembler_b = form_b.assembler
         rhs         = form_b.vector
+        # ...
 
+        # ... set expression for the function f
+        f.set("2")
+        # ...
+
+        # ...
         assembler_a.assemble()
         assembler_b.assemble()
         # ...
 
         # ...
-        matrix.export("matrix")
-#        rhs.export("rhs.txt")
+        from clapp.plaf.parameters.linear_solver import LAPACK_LU
+        from clapp.plaf.parameters.linear_solver import DRIVER
+        from clapp.plaf.linear_solver  import Linear_solver
+
+        params = DRIVER(solver=LAPACK_LU())
+        linsol = Linear_solver(matrix=matrix, dirname="input", parameters=params)
+        # ...
+
+        # ...
+        y = linsol.solve(rhs)
+        # ...
+
+        # ... exports the field
+        u.set(y)
+        # ...
+
+        # ... plot field using matplotlib
+        import matplotlib.pyplot as plt
+
+        u.plot(n_pts=100)
+        plt.show()
+        # ...
+
+        # ... define the analytical solution for u
+        from clapp.vale.expressions.function import Function
+
+        u_analytic = Function("u_analytic", "x*(1 - x)", args=["x"])
+        # ...
+
+        # ... compute L2 error
+        x = u.compute_l2_error(mapping=mapping, function=u_analytic)[0,0]
+        print ("    L2-error norm : " + str(x))
+        # ...
+
+        # ...
+        cmd = "rm -rf input"
+        os.system(cmd)
+        # ...
+
+        # ...
+        plt.clf()
+        # ...
+
+        print ("> run using ", filename, " passed.")
         # ...
     # ...
-
 
     import clapp.common.utils      as clapp_utils
 

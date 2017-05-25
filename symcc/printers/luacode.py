@@ -16,6 +16,7 @@ complete source code files.
 from __future__ import print_function, division
 
 from sympy.core import S, numbers, Rational, Float, Lambda
+from sympy.core.function import Function
 from sympy.core.compatibility import string_types, range
 from sympy.printing.precedence import precedence
 from sympy.sets.fancysets import Range
@@ -267,54 +268,10 @@ class LuaCodePrinter(CodePrinter):
 
     def _print_Function(self, expr):
         """
-        basic function for printing `Function`
-
-        Function Style :
-
-        1. args[0].func(args[1:]), method with arguments
-        2. args[0].func(), method without arguments
-        3. args[1].func(), method without arguments (e.g. (e, x) => x.exp())
-        4. func(args), function with arguments
         """
-
-        if expr.func.__name__ in self.known_functions:
-            cond_func = self.known_functions[expr.func.__name__]
-            func = None
-            style = 1
-            if isinstance(cond_func, str):
-                func = cond_func
-            else:
-                for cond, func, style in cond_func:
-                    if cond(*expr.args):
-                        break
-            if func is not None:
-                if style == 1:
-                    ret = "%(var)s.%(method)s(%(args)s)" % {
-                        'var': self._print_caller_var(expr.args[0]),
-                        'method': func,
-                        'args': self.stringify(expr.args[1:], ", ") if len(expr.args) > 1 else ''
-                    }
-                elif style == 2:
-                    ret = "%(var)s.%(method)s()" % {
-                        'var': self._print_caller_var(expr.args[0]),
-                        'method': func,
-                    }
-                elif style == 3:
-                    ret = "%(var)s.%(method)s()" % {
-                        'var': self._print_caller_var(expr.args[1]),
-                        'method': func,
-                    }
-                else:
-                    ret = "%(func)s(%(args)s)" % {
-                        'func': func,
-                        'args': self.stringify(expr.args, ", "),
-                    }
-                return ret
-        elif hasattr(expr, '_imp_') and isinstance(expr._imp_, Lambda):
-            # inlined function
-            return self._print(expr._imp_(*expr.args))
-        else:
-            return self._print_not_supported(expr)
+        # TODO improve. for the moment, in ValeCodeGen we subs the expression to
+        # add the call to the function
+        return str(expr)
 
     def _print_Pow(self, expr):
         if expr.base.is_integer and not expr.exp.is_integer:

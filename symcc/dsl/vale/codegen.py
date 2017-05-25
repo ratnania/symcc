@@ -3,6 +3,7 @@ from symcc.types.ast import For, Assign
 from symcc.utilities.codegen import codegen, Result
 
 from sympy.core.symbol import Symbol
+from sympy.core.function import Function
 from sympy.abc import x,y,i
 from sympy.tensor import Idx, Indexed, IndexedBase
 from sympy.core.sympify import sympify
@@ -290,6 +291,19 @@ class ValeCodegen(Codegen):
             # TODO get n_rows from LinearForm
             _n_rows = Symbol('n_rows', integer=True)
 
+            # update calls to functions
+            user_functions = expr.attributs["user_functions"]
+            for f_name in user_functions:
+                if _dim == 1:
+                    f = Function(f_name)(Symbol("x"))
+                elif _dim == 2:
+                    f = Function(f_name)(Symbol("x"), Symbol("y"))
+                elif _dim == 3:
+                    f = Function(f_name)(Symbol("x"), Symbol("y"), Symbol("z"))
+
+                _expr = _expr.subs(Symbol(f_name), f)
+
+
         elif isinstance(expr, BilinearForm):
             _expr = expr.to_sympy()
             for f in expr.args_test.functions:
@@ -311,6 +325,18 @@ class ValeCodegen(Codegen):
             # TODO get n_rows,n_cols from BilinearForm
             _n_rows = Symbol('n_rows', integer=True)
             _n_cols = Symbol('n_cols', integer=True)
+
+            # update calls to functions
+            user_functions = expr.attributs["user_functions"]
+            for f_name in user_functions:
+                if _dim == 1:
+                    f = Function(f_name)(Symbol("x"))
+                elif _dim == 2:
+                    f = Function(f_name)(Symbol("x"), Symbol("y"))
+                elif _dim == 3:
+                    f = Function(f_name)(Symbol("x"), Symbol("y"), Symbol("z"))
+
+                _expr = _expr.subs(Symbol(f_name), f)
 
         else:
             if not(dim is None) or not(name is None):

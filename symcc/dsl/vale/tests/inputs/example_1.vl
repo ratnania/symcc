@@ -1,6 +1,7 @@
 Domain(dim=1,kind="structured") :: Omega
 Space(domain=Omega,kind='h1')   :: V
 Field(space=V)                  :: u
+Function(x)                     :: f 
 
-b(phi::V) := < phi >_Omega 
+b(phi::V) := < f * phi >_Omega 
 a(phi::V, psi::V) := < dx(phi) * dx(psi) >_Omega

@@ -176,11 +176,18 @@ class ClappAST(object):
                 #     TODO move parts of this code
                 code = ValeCodegen(token).doprint(language)
 
+                # ...
+                includes = "setmetatable(_ENV, { __index=math }) " + " \n"
+                for name in token.attributs["user_functions"]:
+                    txt = "function_" + name
+                    includes += txt + " = require '" + txt + "'" + " \n"
+                    includes += "setmetatable(_ENV, { __index=" + txt + " })" + " \n"
+                # ...
+
                 header = code.split(")")[0] + ")\n"
                 body   = code[len(header):]
 
-                meta = "setmetatable(_ENV, { __index=math }) " + " \n"
-                new_code = header + meta + body
+                new_code = header + includes + body
 
                 f = open(filename, "a")
                 f.write(new_code)
@@ -242,11 +249,18 @@ class ClappAST(object):
                 #     TODO move parts of this code
                 code = ValeCodegen(token).doprint(language)
 
+                # ...
+                includes = "setmetatable(_ENV, { __index=math }) " + " \n"
+                for name in token.attributs["user_functions"]:
+                    txt = "function_" + name
+                    includes += txt + " = require '" + txt + "'" + " \n"
+                    includes += "setmetatable(_ENV, { __index=" + txt + " })" + " \n"
+                # ...
+
                 header = code.split(")")[0] + ")\n"
                 body   = code[len(header):]
 
-                meta = "setmetatable(_ENV, { __index=math }) " + " \n"
-                new_code = header + meta + body
+                new_code = header + includes + body
 
                 f = open(filename, "a")
                 f.write(new_code)
