@@ -23,9 +23,9 @@ def test_dsl():
     # ...
 
     # ... parse the Vale code
-#    ast = vale.parse_from_file("inputs/example_1.vl")
+    ast = vale.parse_from_file("inputs/example_1.vl")
 #    ast = vale.parse_from_file("inputs/example_2.vl")
-    ast = vale.parse_from_file("inputs/example_3.vl")
+#    ast = vale.parse_from_file("inputs/example_3.vl")
     # ...
 
     # ...
@@ -89,7 +89,7 @@ def test_model_1d():
 
         # ... accessing the pde declarations
         V           = pde["V"]
-        u           = pde["u"]
+        phi         = pde["phi"]
         form_a      = pde["a"]
         form_b      = pde["b"]
         f           = pde["f"]
@@ -125,24 +125,24 @@ def test_model_1d():
         # ...
 
         # ... exports the field
-        u.set(y)
+        phi.set(y)
         # ...
 
         # ... plot field using matplotlib
         import matplotlib.pyplot as plt
 
-        u.plot(n_pts=100)
+        phi.plot(n_pts=100)
         plt.show()
         # ...
 
-        # ... define the analytical solution for u
+        # ... define the analytical solution for phi
         from clapp.vale.expressions.function import Function
 
         u_analytic = Function("u_analytic", "x*(1 - x)", args=["x"])
         # ...
 
         # ... compute L2 error
-        x = u.compute_l2_error(mapping=mapping, function=u_analytic)[0,0]
+        x = phi.compute_l2_error(mapping=mapping, function=u_analytic)[0,0]
         print ("    L2-error norm : " + str(x))
         # ...
 
@@ -213,7 +213,7 @@ def test_model_2d():
 
         # ... accessing the pde declarations
         V           = pde["V"]
-        u           = pde["u"]
+        phi         = pde["phi"]
         form_a      = pde["a"]
         form_b      = pde["b"]
         f           = pde["f"]
@@ -249,24 +249,24 @@ def test_model_2d():
         # ...
 
         # ... exports the field
-        u.set(y)
+        phi.set(y)
         # ...
 
         # ... plot field using matplotlib
         import matplotlib.pyplot as plt
 
-        u.plot(n_pts=100)
+        phi.plot(n_pts=100)
         plt.show()
         # ...
 
-        # ... define the analytical solution for u
+        # ... define the analytical solution for phi
         from clapp.vale.expressions.function import Function
 
         u_analytic = Function("u_analytic", "x*(1-x)*y*(1-y)", args=["x", "y"])
         # ...
 
         # ... compute L2 error
-        x = u.compute_l2_error(mapping=mapping, function=u_analytic)[0,0]
+        x = phi.compute_l2_error(mapping=mapping, function=u_analytic)[0,0]
         print ("    L2-error norm : " + str(x))
         # ...
 
@@ -337,7 +337,7 @@ def test_model_3d():
 
         # ... accessing the pde declarations
         V           = pde["V"]
-        u           = pde["u"]
+        phi         = pde["phi"]
         form_a      = pde["a"]
         form_b      = pde["b"]
         f           = pde["f"]
@@ -373,22 +373,22 @@ def test_model_3d():
         # ...
 
         # ... exports the field
-        u.set(y)
+        phi.set(y)
         # ...
 
         # ... exports phi to vtk file. Can be used in Visit and Paraview
         filename_out = "uh_3d_"+filename.split('/')[-1].split('.')[0] + ".vtk"
-        u.to_vtk(filename_out, mapping=mapping, n_pts=20)
+        phi.to_vtk(filename_out, mapping=mapping, n_pts=20)
         # ...
 
-        # ... define the analytical solution for u
+        # ... define the analytical solution for phi
         from clapp.vale.expressions.function import Function
 
         u_analytic = Function("u_analytic", "x*(1-x)*y*(1-y)*z*(1-z)", args=["x", "y", "z"])
         # ...
 
         # ... compute L2 error
-        x = u.compute_l2_error(mapping=mapping, function=u_analytic)[0,0]
+        x = phi.compute_l2_error(mapping=mapping, function=u_analytic)[0,0]
         print ("    L2-error norm : " + str(x))
         # ...
 
