@@ -2,6 +2,8 @@
 from symcc.types.ast import For, Assign
 from symcc.utilities.codegen import codegen, Result
 
+
+from sympy.core.singleton import S
 from sympy.core.symbol import Symbol
 from sympy.core.function import Function
 from sympy.abc import x,y,i
@@ -248,6 +250,73 @@ class TrialFunction(Codegen):
         super(TrialFunction, self).__init__(body, local_vars=local_vars, args=args)
 
 
+class Field(Codegen):
+    def __init__(self, dim, n_deriv, fields):
+        # ...
+        n1 = Symbol('n1', integer=True)
+        n2 = Symbol('n2', integer=True)
+        n3 = Symbol('n3', integer=True)
+        # ...
+
+        # ...
+        n_fields = Symbol('n_fields', integer=True)
+        n_deriv  = Symbol('n_deriv',  integer=True)
+
+        arr_values = IndexedBase('arr_values')
+
+        args  = [n_fields, n_deriv]
+        args += [arr_values]
+        # ...
+
+        # ...
+        ns = [n1, n2, n3][:dim]
+        n = S.One
+        for k in range(0, dim):
+            n *= ns[k]
+        # ...
+
+        # ...
+        def assign_index(i_field, i_deriv):
+            """
+            i_field in [1, n_fields]
+            i_deriv in [0, n_deriv]
+            """
+            if dim == 1:
+                expr = '(g1-1)*n_fields*(n_deriv+1) + (i_field-1)*(n_deriv+1) + i_deriv + 1'
+            else:
+                expr = '(g-1)*n_fields*(n_deriv+1) + (i_field-1)*(n_deriv+1) + i_deriv + 1'
+            expr = sympify(expr)
+            expr = expr.subs({Symbol("i_field"): i_field})
+            expr = expr.subs({Symbol("i_deriv"): i_deriv})
+
+            return Assign(i_f, expr)
+        # ...
+
+        # ...
+        local_vars = []
+        body = []
+        i_f  = Idx('i_f', n*n_fields*(n_deriv+1))
+        print(">>>> FIELDS : " + str(fields))
+        for i_field, field in enumerate(fields):
+            # ... value on quad points
+            local_vars  += [Symbol(str(field) + "_0")]
+
+            body.append(assign_index(i_field+1, i_deriv=0))
+            body.append(Assign(Symbol(str(field) + "_0"), arr_values[i_f]))
+            # ...
+
+            # ... field derivatives
+            for axis, d in enumerate(["x","y","z"][:dim]):
+                local_vars  += [Symbol(str(field) + "_" + d)]
+
+                body.append(assign_index(i_field+1, i_deriv=axis+1))
+                body.append(Assign(Symbol(str(field) + "_" + d), arr_values[i_f]))
+            # ...
+        # ...
+
+        super(Field, self).__init__(body, local_vars=local_vars, args=args)
+
+
 class Formulation(Codegen):
     def __init__(self, expr):
         contribution = Symbol("contribution")
@@ -276,6 +345,8 @@ class ValeCodegen(Codegen):
         _trial  = False
         _n_rows = None
         _n_cols = None
+        user_fields = []
+        n_deriv = 1
 
         if isinstance(expr, LinearForm):
             _expr = expr.to_sympy()
@@ -303,6 +374,8 @@ class ValeCodegen(Codegen):
 
                 _expr = _expr.subs(Symbol(f_name), f)
 
+            # list of fields
+            user_fields = expr.attributs["user_fields"]
 
         elif isinstance(expr, BilinearForm):
             _expr = expr.to_sympy()
@@ -338,6 +411,9 @@ class ValeCodegen(Codegen):
 
                 _expr = _expr.subs(Symbol(f_name), f)
 
+            # list of fields
+            user_fields = expr.attributs["user_fields"]
+
         else:
             if not(dim is None) or not(name is None):
                 raise ValueError("Both dim and name must be provided.")
@@ -356,6 +432,7 @@ class ValeCodegen(Codegen):
             stmts += [TrialFunction(_dim)]
 
         stmts += [Pullback(_dim, trial=_trial), \
+                  Field(_dim, n_deriv, user_fields), \
                   Formulation(_expr)]
 
         body       = []

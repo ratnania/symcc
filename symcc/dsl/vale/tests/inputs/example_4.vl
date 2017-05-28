@@ -1,0 +1,7 @@
+Domain(dim=3,kind="structured") :: Omega
+Space(domain=Omega,kind='h1')   :: V
+Field(space=V)                  :: q 
+Function(x)                     :: f 
+
+b(v::V) := < dx(q) * v >_Omega 
+a(v::V, u::V) := < dx(v) * dx(u) >_Omega

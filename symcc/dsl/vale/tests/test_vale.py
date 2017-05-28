@@ -23,9 +23,10 @@ def test_dsl():
     # ...
 
     # ... parse the Vale code
-    ast = vale.parse_from_file("inputs/example_1.vl")
+#    ast = vale.parse_from_file("inputs/example_1.vl")
 #    ast = vale.parse_from_file("inputs/example_2.vl")
 #    ast = vale.parse_from_file("inputs/example_3.vl")
+    ast = vale.parse_from_file("inputs/example_4.vl")
     # ...
 
     # ...
@@ -46,8 +47,8 @@ def test_dsl():
 
     # ... TODO get dim from domain
 #    for f in [b, a]:
-#    for f in [b]:
-    for f in [a]:
+    for f in [b]:
+#    for f in [a]:
         print("============ " + str(f) + " ============")
         kernel = ValeCodegen(f)
 
@@ -424,7 +425,7 @@ def test_model_3d():
 ######################################
 if __name__ == "__main__":
 #    test_vale()
-#    test_dsl()
+    test_dsl()
 #    test_model_1d()
 #    test_model_2d()
-    test_model_3d()
+#    test_model_3d()
