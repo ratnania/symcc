@@ -1,0 +1,49 @@
+Lipy:
+  statements*=Block
+;
+
+Block: 
+  Stmt* Retstmt?
+;
+
+Retstmt: 
+  'return' Explist? ';'?
+;
+
+Explist: 
+  Expression (',' Expression)*
+;
+
+StmtFor:
+  'for' name=ID EQ start=Expression ',' end=Expression (',' step=Expression)? 'do' block=Block 'end'
+;
+
+StmtFunctionCall:
+  VarOrExp NameAndArgs+
+;
+
+VarOrExp: 
+  ID | '(' Expression ')'
+;
+
+NameAndArgs: 
+  (':' NAME)? args
+;
+
+Stmt: 
+  ';'
+  | StmtFunctionCall 
+  | StmtFor 
+;
+
+Expression: 
+  'nil' | 'false' | 'true'
+  | NUMBER
+  | STRING
+;
+
+
+EQ:
+  "="
+;
+
