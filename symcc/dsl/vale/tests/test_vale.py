@@ -23,7 +23,9 @@ def test_dsl():
     # ...
 
     # ... parse the Vale code
-    ast = vale.parse_from_file("inputs/example_4.vl")
+    ast = vale.parse_from_file("inputs/1d/example_2.vl")
+#    ast = vale.parse_from_file("inputs/2d/example_2.vl")
+#    ast = vale.parse_from_file("inputs/3d/example_2.vl")
     # ...
 
     # ...
@@ -423,7 +425,7 @@ def test_model_3d():
 ######################################
 if __name__ == "__main__":
 #    test_vale()
-#    test_dsl()
+    test_dsl()
 #    test_model_1d()
 #    test_model_2d()
-    test_model_3d()
+#    test_model_3d()
