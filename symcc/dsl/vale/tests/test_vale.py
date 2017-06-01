@@ -168,7 +168,7 @@ def test_model_1d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-    run(filename="inputs/example_1.vl")
+    run(filename="inputs/1d/example_1.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -254,6 +254,7 @@ def test_model_2d():
         import matplotlib.pyplot as plt
 
         phi.plot(n_pts=100)
+        plt.colorbar()
         plt.show()
         # ...
 
@@ -292,7 +293,7 @@ def test_model_2d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-    run(filename="inputs/example_2.vl")
+    run(filename="inputs/2d/example_1.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -410,7 +411,7 @@ def test_model_3d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-    run(filename="inputs/example_3.vl")
+    run(filename="inputs/3d/example_1.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -422,7 +423,7 @@ def test_model_3d():
 ######################################
 if __name__ == "__main__":
 #    test_vale()
-    test_dsl()
+#    test_dsl()
 #    test_model_1d()
 #    test_model_2d()
-#    test_model_3d()
+    test_model_3d()

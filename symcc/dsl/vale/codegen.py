@@ -434,9 +434,13 @@ class ValeCodegen(Codegen):
         if _trial:
             stmts += [TrialFunction(_dim)]
 
-        stmts += [Pullback(_dim, trial=_trial), \
-                  Field(_dim, n_deriv, user_fields), \
-                  Formulation(_expr)]
+        stmts += [Pullback(_dim, trial=_trial)]
+
+        if len(user_fields) > 0:
+            stmts += [Field(_dim, n_deriv, user_fields)]
+
+        stmts += [Formulation(_expr)]
+
 
         body       = []
         local_vars = []
