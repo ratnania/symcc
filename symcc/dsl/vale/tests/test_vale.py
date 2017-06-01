@@ -6,6 +6,7 @@ from symcc.dsl.vale import construct_model
 
 from sympy import S
 from sympy.core.sympify import sympify
+import numpy as np
 
 
 def test_vale():
@@ -23,8 +24,8 @@ def test_dsl():
     # ...
 
     # ... parse the Vale code
-    ast = vale.parse_from_file("inputs/1d/example_2.vl")
-#    ast = vale.parse_from_file("inputs/2d/example_2.vl")
+#    ast = vale.parse_from_file("inputs/1d/example_2.vl")
+    ast = vale.parse_from_file("inputs/2d/example_2.vl")
 #    ast = vale.parse_from_file("inputs/3d/example_2.vl")
     # ...
 
@@ -106,6 +107,12 @@ def test_model_1d():
         f.set("2")
         # ...
 
+        try:
+            q = pde["q"]
+            q.set(np.ones(q.n_size))
+        except:
+            pass
+
         # ...
         assembler_a.assemble()
         assembler_b.assemble()
@@ -151,9 +158,9 @@ def test_model_1d():
         os.system(cmd)
         # ...
 
-        # ...
-        plt.clf()
-        # ...
+#        # ...
+#        plt.clf()
+#        # ...
 
         print ("> run using ", filename, " passed.")
         # ...
@@ -170,7 +177,8 @@ def test_model_1d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-    run(filename="inputs/1d/example_1.vl")
+#    run(filename="inputs/1d/example_1.vl")
+    run(filename="inputs/1d/example_2.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -229,6 +237,12 @@ def test_model_2d():
         # ... set expression for the function f
         f.set("2*x*(1-x) + 2*y*(1-y)")
         # ...
+
+        try:
+            q = pde["q"]
+            q.set(np.ones(q.n_size))
+        except:
+            pass
 
         # ...
         assembler_a.assemble()
@@ -295,7 +309,8 @@ def test_model_2d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-    run(filename="inputs/2d/example_1.vl")
+#    run(filename="inputs/2d/example_1.vl")
+    run(filename="inputs/2d/example_2.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -355,6 +370,12 @@ def test_model_3d():
         f.set("2*x*(1-x)*y*(1-y) + 2*y*(1-y)*z*(1-z) + 2*z*(1-z)*x*(1-x)")
         # ...
 
+        try:
+            q = pde["q"]
+            q.set(np.ones(q.n_size))
+        except:
+            pass
+
         # ...
         assembler_a.assemble()
         assembler_b.assemble()
@@ -413,7 +434,8 @@ def test_model_3d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-    run(filename="inputs/3d/example_1.vl")
+#    run(filename="inputs/3d/example_1.vl")
+    run(filename="inputs/3d/example_2.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -425,7 +447,7 @@ def test_model_3d():
 ######################################
 if __name__ == "__main__":
 #    test_vale()
-    test_dsl()
+#    test_dsl()
 #    test_model_1d()
 #    test_model_2d()
-#    test_model_3d()
+    test_model_3d()

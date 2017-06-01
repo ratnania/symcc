@@ -169,6 +169,11 @@ class ClappAST(object):
                 space       = _dict[token.attributs["space"]]
                 # ...
 
+                # ... sets n_deriv dict
+                #     TODO must be computed from AST
+                n_deriv={"trial":1, "test":1, "fields":0}
+                # ...
+
                 # ...
                 kernel_name = "kernel_" + str(token.name)
                 filename    = os.path.join(directory, "kernels.lua")
@@ -191,6 +196,7 @@ class ClappAST(object):
 
                 new_code = header + includes + body
 
+                # ARA
                 f = open(filename, "a")
                 f.write(new_code)
                 f.close()
@@ -208,6 +214,7 @@ class ClappAST(object):
                                            vectors=[vector], \
                                            mapping=mapping, \
                                            ddm_parameters=ddm_params, \
+                                           n_deriv=n_deriv, \
                                            verbose=False)
                 # ...
 
@@ -242,6 +249,11 @@ class ClappAST(object):
                 space_trial = _dict[token.attributs["space_trial"]]
                 # ...
 
+                # ... sets n_deriv dict
+                #     TODO must be computed from AST
+                n_deriv={"trial":1, "test":1, "fields":0}
+                # ...
+
                 # ...
                 kernel_name = "kernel_" + str(token.name)
                 filename    = os.path.join(directory, "kernels.lua")
@@ -264,6 +276,7 @@ class ClappAST(object):
 
                 new_code = header + includes + body
 
+                # ARA
                 f = open(filename, "a")
                 f.write(new_code)
                 f.close()
@@ -282,6 +295,7 @@ class ClappAST(object):
                                            matrices=[matrix], \
                                            mapping=mapping, \
                                            ddm_parameters=ddm_params, \
+                                           n_deriv=n_deriv, \
                                            verbose=True)
                 # ...
 
@@ -332,6 +346,7 @@ def construct_model(ast_or_filename, backend="clapp", **settings):
 
         # ...
         folder = "." + str(backend)
+        # ARA
         if not os.path.exists(folder):
             os.makedirs(folder)
 

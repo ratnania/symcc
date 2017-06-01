@@ -251,7 +251,7 @@ class TrialFunction(Codegen):
 
 
 class Field(Codegen):
-    def __init__(self, dim, n_deriv, fields):
+    def __init__(self, dim, n_deriv, fields, **settings):
         # ...
         n1 = Symbol('n1', integer=True)
         n2 = Symbol('n2', integer=True)
@@ -262,10 +262,10 @@ class Field(Codegen):
         n_fields = Symbol('n_fields', integer=True)
         n_deriv  = Symbol('n_deriv',  integer=True)
 
-        arr_values = IndexedBase('arr_values')
+        arr_fields = IndexedBase('arr_fields')
 
         args  = [n_fields, n_deriv]
-        args += [arr_values]
+        args += [arr_fields]
         # ...
 
         # ...
@@ -293,6 +293,13 @@ class Field(Codegen):
         # ...
 
         # ...
+        try:
+            _n_deriv = settings["n_deriv"]
+        except:
+            _n_deriv = 0
+        # ...
+
+        # ...
         local_vars = []
         body = []
         i_f  = Idx('i_f', n*n_fields*(n_deriv+1))
@@ -301,15 +308,16 @@ class Field(Codegen):
             local_vars  += [Symbol(str(field) + "_0")]
 
             body.append(assign_index(i_field+1, i_deriv=0))
-            body.append(Assign(Symbol(str(field) + "_0"), arr_values[i_f]))
+            body.append(Assign(Symbol(str(field) + "_0"), arr_fields[i_f]))
             # ...
 
             # ... field derivatives
-            for axis, d in enumerate(["x","y","z"][:dim]):
-                local_vars  += [Symbol(str(field) + "_" + d)]
+            if _n_deriv > 0:
+                for axis, d in enumerate(["x","y","z"][:dim]):
+                    local_vars  += [Symbol(str(field) + "_" + d)]
 
-                body.append(assign_index(i_field+1, i_deriv=axis+1))
-                body.append(Assign(Symbol(str(field) + "_" + d), arr_values[i_f]))
+                    body.append(assign_index(i_field+1, i_deriv=axis+1))
+                    body.append(Assign(Symbol(str(field) + "_" + d), arr_fields[i_f]))
             # ...
         # ...
 
