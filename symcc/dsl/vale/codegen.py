@@ -293,10 +293,7 @@ class Field(Codegen):
         # ...
 
         # ...
-        try:
-            _n_deriv = settings["n_deriv"]
-        except:
-            _n_deriv = 0
+        n_deriv_fields = settings["n_deriv_fields"]
         # ...
 
         # ...
@@ -312,7 +309,7 @@ class Field(Codegen):
             # ...
 
             # ... field derivatives
-            if _n_deriv > 0:
+            if n_deriv_fields > 0:
                 for axis, d in enumerate(["x","y","z"][:dim]):
                     local_vars  += [Symbol(str(field) + "_" + d)]
 
@@ -354,6 +351,7 @@ class ValeCodegen(Codegen):
         _n_cols = None
         user_fields = []
         n_deriv = 1
+        n_deriv_fields = 0
 
         if isinstance(expr, LinearForm):
             _expr = expr.to_sympy()
@@ -385,6 +383,8 @@ class ValeCodegen(Codegen):
             user_fields = expr.attributs["user_fields"]
             for f_name in user_fields:
                 _expr = _expr.subs(Symbol(f_name), Symbol(f_name+"_0"))
+
+            n_deriv_fields = expr.n_deriv_fields
 
         elif isinstance(expr, BilinearForm):
             _expr = expr.to_sympy()
@@ -425,6 +425,8 @@ class ValeCodegen(Codegen):
             for f_name in user_fields:
                 _expr = _expr.subs(Symbol(f_name), Symbol(f_name+"_0"))
 
+            n_deriv_fields = expr.n_deriv_fields
+
         else:
             if not(dim is None) or not(name is None):
                 raise ValueError("Both dim and name must be provided.")
@@ -445,7 +447,8 @@ class ValeCodegen(Codegen):
         stmts += [Pullback(_dim, trial=_trial)]
 
         if len(user_fields) > 0:
-            stmts += [Field(_dim, n_deriv, user_fields)]
+            stmts += [Field(_dim, n_deriv, user_fields,
+                            n_deriv_fields=n_deriv_fields)]
 
         stmts += [Formulation(_expr)]
 

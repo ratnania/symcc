@@ -19,6 +19,10 @@ namespace = {}
 stack = {}
 settings = {}
 
+operators = {}
+operators["1"] = ["dx", "dy", "dz"]
+operators["2"] = ["dxx", "dyy", "dzz", "dxy", "dyz", "dxz"]
+
 
 class Vale(Basic):
     def __init__(self, **kwargs):
@@ -121,14 +125,21 @@ class LinearForm(Form):
             stack[f] = f
 
         settings["n_deriv"] = 0
+        settings["n_deriv_fields"] = 0
+
         expr = self.expression.expr
 
         for f in self.args.functions:
             stack.pop(f)
 
-        self.n_deriv = settings["n_deriv"]
+        self.n_deriv        = settings["n_deriv"]
+        self.n_deriv_fields = settings["n_deriv_fields"]
+
         settings.pop("n_deriv")
-        print(">> Linear.n_deriv : " + str(self.n_deriv))
+        settings.pop("n_deriv_fields")
+
+        print(">> Linear.n_deriv        : " + str(self.n_deriv))
+        print(">> Linear.n_deriv_fields : " + str(self.n_deriv_fields))
 
         return expr
 
@@ -164,14 +175,21 @@ class BilinearForm(Form):
             stack[f] = f
 
         settings["n_deriv"] = 0
+        settings["n_deriv_fields"] = 0
+
         expr = self.expression.expr
 
         for f in args:
             stack.pop(f)
 
-        self.n_deriv = settings["n_deriv"]
+        self.n_deriv        = settings["n_deriv"]
+        self.n_deriv_fields = settings["n_deriv_fields"]
+
         settings.pop("n_deriv")
-        print(">> Bilinear.n_deriv : " + str(self.n_deriv))
+        settings.pop("n_deriv_fields")
+
+        print(">> Bilinear.n_deriv        : " + str(self.n_deriv))
+        print(">> Bilinear.n_deriv_fields : " + str(self.n_deriv_fields))
 
         return expr
 
@@ -214,10 +232,17 @@ class FactorUnary(ExpressionElement):
         # TODO gets dim from Domain
         dim = 2
 
-        if self.name in ["dx", "dy", "dz"]:
-            settings["n_deriv"] = max(settings["n_deriv"], 1)
-        elif self.name in ["dxx", "dyy", "dzz", "dxy", "dyz", "dxz"]:
-            settings["n_deriv"] = max(settings["n_deriv"], 2)
+        try:
+            if isinstance(namespace[str(expr)], Field):
+                if self.name in operators["1"]:
+                    settings["n_deriv_fields"] = max(settings["n_deriv_fields"], 1)
+                elif self.name in operators["2"]:
+                    settings["n_deriv_fields"] = max(settings["n_deriv_fields"], 2)
+        except:
+            if self.name in operators["1"]:
+                settings["n_deriv"] = max(settings["n_deriv"], 1)
+            elif self.name in operators["2"]:
+                settings["n_deriv"] = max(settings["n_deriv"], 2)
 
         if self.name == "dx":
             return d_var(expr, 'x')
