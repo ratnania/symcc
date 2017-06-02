@@ -17,6 +17,7 @@ __all__ = ["Vale", \
 # Global variable namespace
 namespace = {}
 stack = {}
+settings = {}
 
 
 class Vale(Basic):
@@ -119,10 +120,15 @@ class LinearForm(Form):
         for f in self.args.functions:
             stack[f] = f
 
+        settings["n_deriv"] = 0
         expr = self.expression.expr
 
         for f in self.args.functions:
             stack.pop(f)
+
+        self.n_deriv = settings["n_deriv"]
+        settings.pop("n_deriv")
+        print(">> Linear.n_deriv : " + str(self.n_deriv))
 
         return expr
 
@@ -157,10 +163,15 @@ class BilinearForm(Form):
         for f in args:
             stack[f] = f
 
+        settings["n_deriv"] = 0
         expr = self.expression.expr
 
         for f in args:
             stack.pop(f)
+
+        self.n_deriv = settings["n_deriv"]
+        settings.pop("n_deriv")
+        print(">> Bilinear.n_deriv : " + str(self.n_deriv))
 
         return expr
 
@@ -202,6 +213,12 @@ class FactorUnary(ExpressionElement):
         expr = self.op.expr
         # TODO gets dim from Domain
         dim = 2
+
+        if self.name in ["dx", "dy", "dz"]:
+            settings["n_deriv"] = max(settings["n_deriv"], 1)
+        elif self.name in ["dxx", "dyy", "dzz", "dxy", "dyz", "dxz"]:
+            settings["n_deriv"] = max(settings["n_deriv"], 2)
+
         if self.name == "dx":
             return d_var(expr, 'x')
         elif self.name == "dy":

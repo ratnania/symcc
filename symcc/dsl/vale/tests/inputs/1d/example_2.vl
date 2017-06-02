@@ -4,5 +4,5 @@ Field(space=V)                  :: phi
 Field(space=V)                  :: q 
 Function(x)                     :: f 
 
-b(v::V) := < f * v + q * v >_Omega 
+b(v::V) := < f * v + dxx(q) * dx(v) >_Omega 
 a(v::V, u::V) := < dx(v) * dx(u) + q * v >_Omega

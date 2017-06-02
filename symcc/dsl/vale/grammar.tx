@@ -101,7 +101,7 @@ Operand:
 ;
 
 UnaryOp:
-   ('grad'|'curl'|'div'|'dx'|'dy'|'dz'|'dxx'|'dyy'|'dzz'|'dxy'|'dyz'|'dxz')
+   ('grad'|'curl'|'div'|'dxx'|'dyy'|'dzz'|'dxy'|'dyz'|'dxz'|'dx'|'dy'|'dz')
 ;
 
 BinaryOp:
