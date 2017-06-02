@@ -170,8 +170,9 @@ class ClappAST(object):
                 # ...
 
                 # ... sets n_deriv dict
-                #     TODO must be computed from AST
-                n_deriv={"trial":1, "test":1, "fields":0}
+                n_deriv={"trial":token.n_deriv, \
+                         "test":token.n_deriv, \
+                         "fields":token.n_deriv_fields}
                 # ...
 
                 # ...
@@ -250,8 +251,9 @@ class ClappAST(object):
                 # ...
 
                 # ... sets n_deriv dict
-                #     TODO must be computed from AST
-                n_deriv={"trial":1, "test":1, "fields":0}
+                n_deriv={"trial":token.n_deriv, \
+                         "test":token.n_deriv, \
+                         "fields":token.n_deriv_fields}
                 # ...
 
                 # ...
