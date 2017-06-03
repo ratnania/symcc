@@ -183,8 +183,8 @@ def test_model_1d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-#    run(filename="inputs/1d/example_1.vl")
-    run(filename="inputs/1d/example_2.vl")
+    run(filename="inputs/1d/example_1.vl")
+#    run(filename="inputs/1d/example_2.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -315,8 +315,8 @@ def test_model_2d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-#    run(filename="inputs/2d/example_1.vl")
-    run(filename="inputs/2d/example_2.vl")
+    run(filename="inputs/2d/example_1.vl")
+#    run(filename="inputs/2d/example_2.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -440,8 +440,8 @@ def test_model_3d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-#    run(filename="inputs/3d/example_1.vl")
-    run(filename="inputs/3d/example_2.vl")
+    run(filename="inputs/3d/example_1.vl")
+#    run(filename="inputs/3d/example_2.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -453,7 +453,7 @@ def test_model_3d():
 ######################################
 if __name__ == "__main__":
 #    test_vale()
-    test_dsl()
+#    test_dsl()
 #    test_model_1d()
 #    test_model_2d()
-#    test_model_3d()
+    test_model_3d()
