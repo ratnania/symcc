@@ -42,6 +42,31 @@ class Codegen(object):
 
 class Pullback(Codegen):
     def __init__(self, dim, trial=False):
+        # ...
+        n1 = Symbol('n1', integer=True)
+        n2 = Symbol('n2', integer=True)
+        n3 = Symbol('n3', integer=True)
+        # ...
+
+        arr_jacobian = IndexedBase('arr_jacobian')
+
+        args  = [arr_jacobian]
+
+        # ... pullback definition
+        jux = Symbol('jux')
+        jvx = Symbol('jvx')
+        jwx = Symbol('jwx')
+
+        juy = Symbol('juy')
+        jvy = Symbol('jvy')
+        jwy = Symbol('jwy')
+
+        juz = Symbol('juz')
+        jvz = Symbol('jvz')
+        jwz = Symbol('jwz')
+        # ...
+
+
         Ni_u  = Symbol('Ni_u')
         Ni_v  = Symbol('Ni_v')
         Ni_w  = Symbol('Ni_w')
@@ -59,21 +84,111 @@ class Pullback(Codegen):
             Nj_y  = Symbol('Nj_y')
             Nj_z  = Symbol('Nj_z')
 
-        body  = []
-        body += [Assign(Ni_x,Ni_u), Assign(Ni_y,Ni_v), Assign(Ni_z,Ni_w)][:dim]
-        if trial:
-            body += [Assign(Nj_x,Nj_u), Assign(Nj_y,Nj_v), Assign(Nj_z,Nj_w)][:dim]
 
+        body  = []
+
+        # ...
+        if dim == 1:
+            # ...
+            g1 = Idx('g1', n1)
+            body.append(Assign(jux, arr_jacobian[g1]))
+            # ...
+
+            # ...
+            body += [Assign(Ni_x, jux * Ni_u)]
+
+            if trial:
+                body += [Assign(Nj_x, jux * Nj_u)]
+            # ...
+        elif dim == 2:
+            # ...
+            gg = Idx('gg', 4 * n1 * n2)
+
+            body.append(Assign(gg, sympify('4*(g - 1) + 1')))
+            body.append(Assign(jux, arr_jacobian[gg]))
+
+            body.append(Assign(gg, sympify('4*(g - 1) + 2')))
+            body.append(Assign(jvx, arr_jacobian[gg]))
+
+            body.append(Assign(gg, sympify('4*(g - 1) + 3')))
+            body.append(Assign(juy, arr_jacobian[gg]))
+
+            body.append(Assign(gg, sympify('4*(g - 1) + 4')))
+            body.append(Assign(jvy, arr_jacobian[gg]))
+            # ...
+
+            # ...
+            body += [Assign(Ni_x, jux * Ni_u + jvx * Ni_v), \
+                     Assign(Ni_y, juy * Ni_u + jvy * Ni_v)]
+
+            if trial:
+                body += [Assign(Nj_x, jux * Nj_u + jvx * Nj_v), \
+                         Assign(Nj_y, juy * Nj_u + jvy * Nj_v)]
+            # ...
+        elif dim == 3:
+            # ...
+            gg = Idx('gg', 9 * n1 * n2 * n3)
+
+            body.append(Assign(gg, sympify('9*(g - 1) + 1')))
+            body.append(Assign(jux, arr_jacobian[gg]))
+
+            body.append(Assign(gg, sympify('9*(g - 1) + 2')))
+            body.append(Assign(jvx, arr_jacobian[gg]))
+
+            body.append(Assign(gg, sympify('9*(g - 1) + 3')))
+            body.append(Assign(jwx, arr_jacobian[gg]))
+
+
+            body.append(Assign(gg, sympify('9*(g - 1) + 4')))
+            body.append(Assign(juy, arr_jacobian[gg]))
+
+            body.append(Assign(gg, sympify('9*(g - 1) + 5')))
+            body.append(Assign(jvy, arr_jacobian[gg]))
+
+            body.append(Assign(gg, sympify('9*(g - 1) + 6')))
+            body.append(Assign(jwy, arr_jacobian[gg]))
+
+
+            body.append(Assign(gg, sympify('9*(g - 1) + 7')))
+            body.append(Assign(juz, arr_jacobian[gg]))
+
+            body.append(Assign(gg, sympify('9*(g - 1) + 8')))
+            body.append(Assign(jvz, arr_jacobian[gg]))
+
+            body.append(Assign(gg, sympify('9*(g - 1) + 9')))
+            body.append(Assign(jwz, arr_jacobian[gg]))
+            # ...
+
+            # ...
+            body += [Assign(Ni_x, jux * Ni_u + jvx * Ni_v + jwx * Ni_w), \
+                     Assign(Ni_y, juy * Ni_u + jvy * Ni_v + jwy * Ni_w), \
+                     Assign(Ni_z, juz * Ni_u + jvz * Ni_v + jwz * Ni_w)]
+
+            if trial:
+                body += [Assign(Nj_x, jux * Nj_u + jvx * Nj_v + jwx * Nj_w), \
+                         Assign(Nj_y, juy * Nj_u + jvy * Nj_v + jwy * Nj_w), \
+                         Assign(Nj_z, juz * Nj_u + jvz * Nj_v + jwz * Nj_w)]
+            # ...
+        # ...
+
+        # ...
         local_vars  = []
 
         local_vars += [Ni_u, Ni_v, Ni_w][:dim]
         local_vars += [Ni_x, Ni_y, Ni_z][:dim]
 
+        local_vars += [jux, jvx, jwx][:dim]
+        local_vars += [juy, jvy, jwy][:dim]
+        local_vars += [juz, jvz, jwz][:dim]
+
         if trial:
             local_vars += [Nj_u, Nj_v, Nj_w][:dim]
             local_vars += [Nj_x, Nj_y, Nj_z][:dim]
+        # ...
 
-        super(Pullback, self).__init__(body, local_vars=local_vars)
+        # ...
+        super(Pullback, self).__init__(body, args=args, local_vars=local_vars)
+        # ...
 
 
 class Geometry(Codegen):
