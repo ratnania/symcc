@@ -9,6 +9,7 @@ from symcc.dsl.vale.syntax import (Vale, \
                                    LinearForm, BilinearForm, \
                                    Domain, Space, Field, Function, Real)
 
+from textx.metamodel import metamodel_from_str
 
 __all__ = ["ValeParser", "ast_to_dict"]
 

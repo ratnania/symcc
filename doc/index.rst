@@ -13,6 +13,7 @@ Welcome to Vale's documentation!
    vale
    syntax
    parser 
+   codegen
 
 
 Indices and tables

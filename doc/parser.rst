@@ -18,3 +18,11 @@ ______
    :members:
    :private-members:
    :special-members:
+
+ValeParser
+__________
+
+.. autoclass:: ValeParser 
+   :members:
+   :private-members:
+   :special-members:

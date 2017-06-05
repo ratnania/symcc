@@ -11,13 +11,6 @@ core
 .. automodule:: symcc.dsl.core
 .. currentmodule:: symcc.dsl.core
 
-Codegen
-_______
-
-.. autoclass:: Codegen 
-   :members:
-   :private-members:
-   :special-members:
 
 Utilities
 ^^^^^^^^^
