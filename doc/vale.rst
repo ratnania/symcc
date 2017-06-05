@@ -11,14 +11,6 @@ core
 .. automodule:: symcc.dsl.core
 .. currentmodule:: symcc.dsl.core
 
-Parser
-______
-
-.. autoclass:: Parser 
-   :members:
-   :private-members:
-   :special-members:
-
 Codegen
 _______
 

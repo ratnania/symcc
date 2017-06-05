@@ -3,7 +3,6 @@
 from sympy import Symbol, sympify
 
 from symcc.dsl.utilities import grad, d_var, inner, outer, cross, dot
-from symcc.dsl.core import Basic, Parser
 
 
 __all__ = ["Vale", \
@@ -16,23 +15,41 @@ __all__ = ["Vale", \
 
 # Global variable namespace
 namespace = {}
-stack = {}
-settings = {}
+stack     = {}
+settings  = {}
 
 operators = {}
 operators["1"] = ["dx", "dy", "dz"]
 operators["2"] = ["dxx", "dyy", "dzz", "dxy", "dyz", "dxz"]
 
 
-class Vale(Basic):
+class Vale(object):
+    """Class for Vale syntax."""
     def __init__(self, **kwargs):
-        declarations = kwargs.pop('declarations')
+        """
+        Constructor for Vale.
 
-        super(Vale, self).__init__(declarations=declarations)
-
+        In Vale, we only have declarations for the moment.
+        """
+        self.declarations = kwargs.pop('declarations')
 
 class Domain(object):
+    """Class representing a Domain."""
     def __init__(self, **kwargs):
+        """
+        A Domain has the following attributs
+
+        * name
+        * dim
+        * kind
+
+        .. note::
+            The grammar rule to define a Domain is
+
+            Domain:
+            "Domain" LPAREN "dim" EQ dim=INT COMMA "kind" EQ kind=STRING RPAREN DEF name=ID
+            ;
+        """
         self.name = kwargs.pop('name')
         self.dim  = kwargs.pop('dim')
         self.kind = kwargs.pop('kind')
@@ -40,7 +57,22 @@ class Domain(object):
         namespace[self.name] = self
 
 class Space(object):
+    """Class representing a Finite Element Space."""
     def __init__(self, **kwargs):
+        """
+        A Space has the following attributs
+
+        * name
+        * domain
+        * kind
+
+        .. note::
+            The grammar rule to define a Space is
+
+            Space:
+            "Space" LPAREN "domain" EQ domain=ID COMMA "kind" EQ kind=STRING RPAREN  DEF name=ID
+            ;
+        """
         self.name   = kwargs.pop('name')
         self.domain = kwargs.pop('domain')
         self.kind   = kwargs.pop('kind')
@@ -48,7 +80,21 @@ class Space(object):
         namespace[self.name] = self
 
 class Field(object):
+    """Class representing a Field."""
     def __init__(self, **kwargs):
+        """
+        A Field has the following attributs
+
+        * name
+        * space
+
+        .. note::
+            The grammar rule to define a Field is
+
+            Field:
+            "Field" LPAREN "space" EQ space=ID RPAREN  DEF name=ID
+            ;
+        """
         self.name  = kwargs.pop('name')
         self.space = kwargs.pop('space')
 
@@ -59,7 +105,20 @@ class Field(object):
         return Symbol(self.name)
 
 class Real(object):
+    """Class representing a Real number."""
     def __init__(self, **kwargs):
+        """
+        A Real number is defined by
+
+        * name
+
+        .. note::
+            The grammar rule to define a Real is
+
+            Real:
+            "Real" DEF name=ID
+            ;
+        """
         self.name  = kwargs.pop('name')
 
         namespace[self.name] = self
@@ -70,7 +129,21 @@ class Real(object):
 
 
 class Function(object):
+    """Class representing a Function."""
     def __init__(self, **kwargs):
+        """
+        A Function has the following attributs
+
+        * name
+        * parameters
+
+        .. note::
+            The grammar rule to define a Function is
+
+            Function:
+            "Function" LPAREN parameters*=ID[','] RPAREN  DEF name=ID
+            ;
+        """
         self.name       = kwargs.pop('name')
         self.parameters = kwargs.pop('parameters', {})
 
@@ -82,6 +155,7 @@ class Function(object):
 
 
 class Form(object):
+    """Abstract Class for Linear/Bilinear forms."""
     def __init__(self, **kwargs):
         self._attributs = {}
 
@@ -98,6 +172,7 @@ class Form(object):
 
 
 class LinearForm(Form):
+    """Class representing a Linear Form."""
     _available_attributs = ["dim", \
                             "space", \
                             "user_fields", \
@@ -105,6 +180,28 @@ class LinearForm(Form):
                             "user_constants"]
 
     def __init__(self, **kwargs):
+        """
+        A Domain has the following attributs
+
+        * name
+        * args
+        * domain
+        * expression
+
+        .. note::
+            The grammar rule to define a LinearForm is
+
+            LinearForm:
+            name=ID
+            LPAREN
+            args=ArgForm
+            RPAREN
+            DEF
+            LTRIANGLE
+            expression=Expression
+            RTRIANGLE SUBSCRIPT domain=ID
+            ;
+        """
         self.name       = kwargs.pop('name')
         self.args       = kwargs.pop('args')
         self.domain     = kwargs.pop('domain')
@@ -144,6 +241,7 @@ class LinearForm(Form):
         return expr
 
 class BilinearForm(Form):
+    """Class representing a Bilinear Form."""
     _available_attributs = ["dim", \
                             "space_test", \
                             "space_trial", \
@@ -152,6 +250,30 @@ class BilinearForm(Form):
                             "user_constants"]
 
     def __init__(self, **kwargs):
+        """
+        A Domain has the following attributs
+
+        * name
+        * args
+        * domain
+        * expression
+
+        .. note::
+            The grammar rule to define a LinearForm is
+
+            BilinearForm:
+            name=ID
+            LPAREN
+            args_test=ArgForm
+            COMMA
+            args_trial=ArgForm
+            RPAREN
+            DEF
+            LTRIANGLE
+            expression=Expression
+            RTRIANGLE SUBSCRIPT domain=ID
+            ;
+        """
         self.name       = kwargs.pop('name')
         self.args_test  = kwargs.pop('args_test')
         self.args_trial = kwargs.pop('args_trial')
@@ -195,6 +317,7 @@ class BilinearForm(Form):
 
 
 class ExpressionElement(object):
+    """Class representing an element of an expression."""
     def __init__(self, **kwargs):
 
         # textX will pass in parent attribute used for parent-child
@@ -208,6 +331,7 @@ class ExpressionElement(object):
 
 
 class FactorSigned(ExpressionElement):
+    """Class representing a signed factor."""
     def __init__(self, **kwargs):
         self.sign = kwargs.pop('sign', '+')
         super(FactorSigned, self).__init__(**kwargs)
@@ -219,6 +343,7 @@ class FactorSigned(ExpressionElement):
         return -expr if self.sign == '-' else expr
 
 class FactorUnary(ExpressionElement):
+    """Class representing a unary factor."""
     def __init__(self, **kwargs):
         # name of the unary operator
         self.name = kwargs['name']

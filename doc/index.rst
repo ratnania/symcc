@@ -11,6 +11,8 @@ Welcome to Vale's documentation!
    :caption: Contents:
 
    vale
+   syntax
+   parser 
 
 
 Indices and tables
