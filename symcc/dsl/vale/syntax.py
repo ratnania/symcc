@@ -138,8 +138,8 @@ class LinearForm(Form):
         settings.pop("n_deriv")
         settings.pop("n_deriv_fields")
 
-        print(">> Linear.n_deriv        : " + str(self.n_deriv))
-        print(">> Linear.n_deriv_fields : " + str(self.n_deriv_fields))
+#        print(">> Linear.n_deriv        : " + str(self.n_deriv))
+#        print(">> Linear.n_deriv_fields : " + str(self.n_deriv_fields))
 
         return expr
 
@@ -188,8 +188,8 @@ class BilinearForm(Form):
         settings.pop("n_deriv")
         settings.pop("n_deriv_fields")
 
-        print(">> Bilinear.n_deriv        : " + str(self.n_deriv))
-        print(">> Bilinear.n_deriv_fields : " + str(self.n_deriv_fields))
+#        print(">> Bilinear.n_deriv        : " + str(self.n_deriv))
+#        print(">> Bilinear.n_deriv_fields : " + str(self.n_deriv_fields))
 
         return expr
 
