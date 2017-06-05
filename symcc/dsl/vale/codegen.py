@@ -41,16 +41,16 @@ class Codegen(object):
 
 
 class Pullback(Codegen):
-    def __init__(self, dim, trial=False):
+    def __init__(self, dim, n_deriv, trial=False):
         # ...
         n1 = Symbol('n1', integer=True)
         n2 = Symbol('n2', integer=True)
         n3 = Symbol('n3', integer=True)
         # ...
 
+        # ...
         arr_jacobian = IndexedBase('arr_jacobian')
-
-        args  = [arr_jacobian]
+        # ...
 
         # ... pullback definition
         jux = Symbol('jux')
@@ -66,24 +66,54 @@ class Pullback(Codegen):
         jwz = Symbol('jwz')
         # ...
 
-
+        # ...
         Ni_u  = Symbol('Ni_u')
         Ni_v  = Symbol('Ni_v')
         Ni_w  = Symbol('Ni_w')
+        Ni_uu = Symbol('Ni_uu')
+        Ni_vv = Symbol('Ni_vv')
+        Ni_ww = Symbol('Ni_ww')
+        Ni_uv = Symbol('Ni_uv')
+        Ni_vw = Symbol('Ni_vw')
+        Ni_uw = Symbol('Ni_uw')
 
         Ni_x  = Symbol('Ni_x')
         Ni_y  = Symbol('Ni_y')
         Ni_z  = Symbol('Ni_z')
+        Ni_xx = Symbol('Ni_xx')
+        Ni_yy = Symbol('Ni_yy')
+        Ni_zz = Symbol('Ni_zz')
+        Ni_xy = Symbol('Ni_xy')
+        Ni_yz = Symbol('Ni_yz')
+        Ni_xz = Symbol('Ni_xz')
+        # ...
 
+        # ...
         if trial:
             Nj_u  = Symbol('Nj_u')
             Nj_v  = Symbol('Nj_v')
             Nj_w  = Symbol('Nj_w')
+            Nj_uu = Symbol('Nj_uu')
+            Nj_vv = Symbol('Nj_vv')
+            Nj_ww = Symbol('Nj_ww')
+            Nj_uv = Symbol('Nj_uv')
+            Nj_vw = Symbol('Nj_vw')
+            Nj_uw = Symbol('Nj_uw')
 
             Nj_x  = Symbol('Nj_x')
             Nj_y  = Symbol('Nj_y')
             Nj_z  = Symbol('Nj_z')
+            Nj_xx = Symbol('Nj_xx')
+            Nj_yy = Symbol('Nj_yy')
+            Nj_zz = Symbol('Nj_zz')
+            Nj_xy = Symbol('Nj_xy')
+            Nj_yz = Symbol('Nj_yz')
+            Nj_xz = Symbol('Nj_xz')
+        # ...
 
+        # ...
+        args  = [arr_jacobian]
+        # ...
 
         body  = []
 
@@ -96,9 +126,14 @@ class Pullback(Codegen):
 
             # ...
             body += [Assign(Ni_x, jux * Ni_u)]
+            if n_deriv > 1:
+                body += [Assign(Ni_xx, Ni_uu)]
 
             if trial:
                 body += [Assign(Nj_x, jux * Nj_u)]
+
+                if n_deriv > 1:
+                    body += [Assign(Nj_xx, Nj_uu)]
             # ...
         elif dim == 2:
             # ...
@@ -121,9 +156,19 @@ class Pullback(Codegen):
             body += [Assign(Ni_x, jux * Ni_u + jvx * Ni_v), \
                      Assign(Ni_y, juy * Ni_u + jvy * Ni_v)]
 
+            if n_deriv > 1:
+                body += [Assign(Ni_xx, Ni_uu), \
+                         Assign(Ni_xy, Ni_uv), \
+                         Assign(Ni_yy, Ni_vv)]
+
             if trial:
                 body += [Assign(Nj_x, jux * Nj_u + jvx * Nj_v), \
                          Assign(Nj_y, juy * Nj_u + jvy * Nj_v)]
+
+                if n_deriv > 1:
+                    body += [Assign(Nj_xx, Nj_uu), \
+                             Assign(Nj_xy, Nj_uv), \
+                             Assign(Nj_yy, Nj_vv)]
             # ...
         elif dim == 3:
             # ...
@@ -164,10 +209,26 @@ class Pullback(Codegen):
                      Assign(Ni_y, juy * Ni_u + jvy * Ni_v + jwy * Ni_w), \
                      Assign(Ni_z, juz * Ni_u + jvz * Ni_v + jwz * Ni_w)]
 
+            if n_deriv > 1:
+                body += [Assign(Ni_xx, Ni_uu), \
+                         Assign(Ni_yy, Ni_vv), \
+                         Assign(Ni_zz, Ni_ww), \
+                         Assign(Ni_xy, Ni_uv), \
+                         Assign(Ni_yz, Ni_vw), \
+                         Assign(Ni_xz, Ni_uw)]
+
             if trial:
                 body += [Assign(Nj_x, jux * Nj_u + jvx * Nj_v + jwx * Nj_w), \
                          Assign(Nj_y, juy * Nj_u + jvy * Nj_v + jwy * Nj_w), \
                          Assign(Nj_z, juz * Nj_u + jvz * Nj_v + jwz * Nj_w)]
+
+                if n_deriv > 1:
+                    body += [Assign(Nj_xx, Nj_uu), \
+                             Assign(Nj_yy, Nj_vv), \
+                             Assign(Nj_zz, Nj_ww), \
+                             Assign(Nj_xy, Nj_uv), \
+                             Assign(Nj_yz, Nj_vw), \
+                             Assign(Nj_xz, Nj_uw)]
             # ...
         # ...
 
@@ -181,9 +242,31 @@ class Pullback(Codegen):
         local_vars += [juy, jvy, jwy][:dim]
         local_vars += [juz, jvz, jwz][:dim]
 
+        if n_deriv > 1:
+            if dim == 1:
+                local_vars += [Ni_uu]
+                local_vars += [Ni_xx]
+            elif dim == 2:
+                local_vars += [Ni_uu, Ni_uv, Ni_vv]
+                local_vars += [Ni_xx, Ni_xy, Ni_yy]
+            elif dim == 3:
+                local_vars += [Ni_uu, Ni_vv, Ni_ww, Ni_uv, Ni_vw, Ni_uw]
+                local_vars += [Ni_xx, Ni_yy, Ni_zz, Ni_xy, Ni_yz, Ni_xz]
+
         if trial:
             local_vars += [Nj_u, Nj_v, Nj_w][:dim]
             local_vars += [Nj_x, Nj_y, Nj_z][:dim]
+
+            if n_deriv > 1:
+                if dim == 1:
+                    local_vars += [Nj_uu]
+                    local_vars += [Nj_xx]
+                elif dim == 2:
+                    local_vars += [Nj_uu, Nj_uv, Nj_vv]
+                    local_vars += [Nj_xx, Nj_xy, Nj_yy]
+                elif dim == 3:
+                    local_vars += [Nj_uu, Nj_vv, Nj_ww, Nj_uv, Nj_vw, Nj_uw]
+                    local_vars += [Nj_xx, Nj_yy, Nj_zz, Nj_xy, Nj_yz, Nj_xz]
         # ...
 
         # ...
@@ -254,7 +337,7 @@ class Geometry(Codegen):
 
 
 class TestFunction(Codegen):
-    def __init__(self, dim):
+    def __init__(self, dim, n_deriv):
         # ...
         n1 = Symbol('n1', integer=True)
         n2 = Symbol('n2', integer=True)
@@ -268,10 +351,9 @@ class TestFunction(Codegen):
         arr_Ni2_s = IndexedBase('arr_Ni2_s')
         arr_Ni3_s = IndexedBase('arr_Ni3_s')
 
-        args  = []
-        args += [n1, n2, n3][:dim]
-        args += [arr_Ni1_0, arr_Ni2_0, arr_Ni3_0][:dim]
-        args += [arr_Ni1_s, arr_Ni2_s, arr_Ni3_s][:dim]
+        arr_Ni1_ss = IndexedBase('arr_Ni1_ss')
+        arr_Ni2_ss = IndexedBase('arr_Ni2_ss')
+        arr_Ni3_ss = IndexedBase('arr_Ni3_ss')
         # ...
 
         # ...
@@ -283,10 +365,34 @@ class TestFunction(Codegen):
         Ni_u  = Symbol('Ni_u')
         Ni_v  = Symbol('Ni_v')
         Ni_w  = Symbol('Ni_w')
+        Ni_uu = Symbol('Ni_uu')
+        Ni_vv = Symbol('Ni_vv')
+        Ni_ww = Symbol('Ni_ww')
+        Ni_uv = Symbol('Ni_uv')
+        Ni_vw = Symbol('Ni_vw')
+        Ni_uw = Symbol('Ni_uw')
+        # ...
 
+        # ...
+        args  = [n1, n2, n3][:dim]
+        args += [arr_Ni1_0, arr_Ni2_0, arr_Ni3_0][:dim]
+        args += [arr_Ni1_s, arr_Ni2_s, arr_Ni3_s][:dim]
+
+        if n_deriv > 1:
+            args += [arr_Ni1_ss, arr_Ni2_ss, arr_Ni3_ss][:dim]
+        # ...
+
+        # ...
         local_vars  = [Ni_0]
-
         local_vars += [Ni_u, Ni_v, Ni_w][:dim]
+
+        if n_deriv > 1:
+            if dim == 1:
+                local_vars += [Ni_uu]
+            elif dim == 2:
+                local_vars += [Ni_uu, Ni_uv, Ni_vv]
+            elif dim == 3:
+                local_vars += [Ni_uu, Ni_vv, Ni_ww, Ni_uv, Ni_vw, Ni_uw]
         # ...
 
         # ...
@@ -295,22 +401,38 @@ class TestFunction(Codegen):
         if dim == 1:
             body.append(Assign(Ni_0, arr_Ni1_0[g1]))
             body.append(Assign(Ni_u, arr_Ni1_s[g1]))
-        if dim == 2:
+
+            if n_deriv > 1:
+                body.append(Assign(Ni_uu, arr_Ni1_ss[g1]))
+        elif dim == 2:
             body.append(Assign(Ni_0, arr_Ni1_0[g1] * arr_Ni2_0[g2]))
             body.append(Assign(Ni_u, arr_Ni1_s[g1] * arr_Ni2_0[g2]))
             body.append(Assign(Ni_v, arr_Ni1_0[g1] * arr_Ni2_s[g2]))
-        if dim == 3:
+
+            if n_deriv > 1:
+                body.append(Assign(Ni_uu, arr_Ni1_ss[g1] * arr_Ni2_0[g2]))
+                body.append(Assign(Ni_uv,  arr_Ni1_s[g1] * arr_Ni2_s[g2]))
+                body.append(Assign(Ni_vv,  arr_Ni1_0[g1] * arr_Ni2_ss[g2]))
+        elif dim == 3:
             body.append(Assign(Ni_0, arr_Ni1_0[g1] * arr_Ni2_0[g2] * arr_Ni3_0[g3]))
             body.append(Assign(Ni_u, arr_Ni1_s[g1] * arr_Ni2_0[g2] * arr_Ni3_0[g3]))
             body.append(Assign(Ni_v, arr_Ni1_0[g1] * arr_Ni2_s[g2] * arr_Ni3_0[g3]))
             body.append(Assign(Ni_w, arr_Ni1_0[g1] * arr_Ni2_0[g2] * arr_Ni3_s[g3]))
+
+            if n_deriv > 1:
+                body.append(Assign(Ni_uu, arr_Ni1_ss[g1] * arr_Ni2_0[g2] * arr_Ni3_0[g3]))
+                body.append(Assign(Ni_vv, arr_Ni1_0[g1] * arr_Ni2_ss[g2] * arr_Ni3_0[g3]))
+                body.append(Assign(Ni_ww, arr_Ni1_0[g1] * arr_Ni2_0[g2] * arr_Ni3_ss[g3]))
+                body.append(Assign(Ni_uv, arr_Ni1_s[g1] * arr_Ni2_s[g2] * arr_Ni3_0[g3]))
+                body.append(Assign(Ni_vw, arr_Ni1_0[g1] * arr_Ni2_s[g2] * arr_Ni3_s[g3]))
+                body.append(Assign(Ni_uw, arr_Ni1_s[g1] * arr_Ni2_0[g2] * arr_Ni3_s[g3]))
         # ...
 
         super(TestFunction, self).__init__(body, local_vars=local_vars, args=args)
 
 
 class TrialFunction(Codegen):
-    def __init__(self, dim):
+    def __init__(self, dim, n_deriv):
         # ...
         n1 = Symbol('n1', integer=True)
         n2 = Symbol('n2', integer=True)
@@ -324,10 +446,9 @@ class TrialFunction(Codegen):
         arr_Nj2_s = IndexedBase('arr_Nj2_s')
         arr_Nj3_s = IndexedBase('arr_Nj3_s')
 
-        args  = []
-        args += [n1, n2, n3][:dim]
-        args += [arr_Nj1_0, arr_Nj2_0, arr_Nj3_0][:dim]
-        args += [arr_Nj1_s, arr_Nj2_s, arr_Nj3_s][:dim]
+        arr_Nj1_ss = IndexedBase('arr_Nj1_ss')
+        arr_Nj2_ss = IndexedBase('arr_Nj2_ss')
+        arr_Nj3_ss = IndexedBase('arr_Nj3_ss')
         # ...
 
         # ...
@@ -339,10 +460,34 @@ class TrialFunction(Codegen):
         Nj_u  = Symbol('Nj_u')
         Nj_v  = Symbol('Nj_v')
         Nj_w  = Symbol('Nj_w')
+        Nj_uu = Symbol('Nj_uu')
+        Nj_vv = Symbol('Nj_vv')
+        Nj_ww = Symbol('Nj_ww')
+        Nj_uv = Symbol('Nj_uv')
+        Nj_vw = Symbol('Nj_vw')
+        Nj_uw = Symbol('Nj_uw')
+        # ...
 
+        # ...
+        args  = [n1, n2, n3][:dim]
+        args += [arr_Nj1_0, arr_Nj2_0, arr_Nj3_0][:dim]
+        args += [arr_Nj1_s, arr_Nj2_s, arr_Nj3_s][:dim]
+
+        if n_deriv > 1:
+            args += [arr_Nj1_ss, arr_Nj2_ss, arr_Nj3_ss][:dim]
+        # ...
+
+        # ...
         local_vars  = [Nj_0]
-
         local_vars += [Nj_u, Nj_v, Nj_w][:dim]
+
+        if n_deriv > 1:
+            if dim == 1:
+                local_vars += [Nj_uu]
+            elif dim == 2:
+                local_vars += [Nj_uu, Nj_uv, Nj_vv]
+            elif dim == 3:
+                local_vars += [Nj_uu, Nj_vv, Nj_ww, Nj_uv, Nj_vw, Nj_uw]
         # ...
 
         # ...
@@ -351,15 +496,31 @@ class TrialFunction(Codegen):
         if dim == 1:
             body.append(Assign(Nj_0, arr_Nj1_0[g1]))
             body.append(Assign(Nj_u, arr_Nj1_s[g1]))
-        if dim == 2:
+
+            if n_deriv > 1:
+                body.append(Assign(Nj_uu, arr_Nj1_ss[g1]))
+        elif dim == 2:
             body.append(Assign(Nj_0, arr_Nj1_0[g1] * arr_Nj2_0[g2]))
             body.append(Assign(Nj_u, arr_Nj1_s[g1] * arr_Nj2_0[g2]))
             body.append(Assign(Nj_v, arr_Nj1_0[g1] * arr_Nj2_s[g2]))
-        if dim == 3:
+
+            if n_deriv > 1:
+                body.append(Assign(Nj_uu, arr_Nj1_ss[g1] * arr_Nj2_0[g2]))
+                body.append(Assign(Nj_uv,  arr_Nj1_s[g1] * arr_Nj2_s[g2]))
+                body.append(Assign(Nj_vv,  arr_Nj1_0[g1] * arr_Nj2_ss[g2]))
+        elif dim == 3:
             body.append(Assign(Nj_0, arr_Nj1_0[g1] * arr_Nj2_0[g2] * arr_Nj3_0[g3]))
             body.append(Assign(Nj_u, arr_Nj1_s[g1] * arr_Nj2_0[g2] * arr_Nj3_0[g3]))
             body.append(Assign(Nj_v, arr_Nj1_0[g1] * arr_Nj2_s[g2] * arr_Nj3_0[g3]))
             body.append(Assign(Nj_w, arr_Nj1_0[g1] * arr_Nj2_0[g2] * arr_Nj3_s[g3]))
+
+            if n_deriv > 1:
+                body.append(Assign(Nj_uu, arr_Nj1_ss[g1] * arr_Nj2_0[g2] * arr_Nj3_0[g3]))
+                body.append(Assign(Nj_vv, arr_Nj1_0[g1] * arr_Nj2_ss[g2] * arr_Nj3_0[g3]))
+                body.append(Assign(Nj_ww, arr_Nj1_0[g1] * arr_Nj2_0[g2] * arr_Nj3_ss[g3]))
+                body.append(Assign(Nj_uv, arr_Nj1_s[g1] * arr_Nj2_s[g2] * arr_Nj3_0[g3]))
+                body.append(Assign(Nj_vw, arr_Nj1_0[g1] * arr_Nj2_s[g2] * arr_Nj3_s[g3]))
+                body.append(Assign(Nj_uw, arr_Nj1_s[g1] * arr_Nj2_0[g2] * arr_Nj3_s[g3]))
         # ...
 
         super(TrialFunction, self).__init__(body, local_vars=local_vars, args=args)
@@ -475,6 +636,8 @@ class ValeCodegen(Codegen):
                 _expr = _expr.subs({Symbol(f): Symbol(B + "_0")})
                 for d in ["x", "y", "z"][:_dim]:
                     _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
+                for d in ["xx", "yy", "zz", "xy", "yz", "xz"]:
+                    _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
 
             _name = "kernel_" + expr.name
             _dim  = expr.attributs["dim"]
@@ -499,6 +662,7 @@ class ValeCodegen(Codegen):
             for f_name in user_fields:
                 _expr = _expr.subs(Symbol(f_name), Symbol(f_name+"_0"))
 
+            n_deriv        = expr.n_deriv
             n_deriv_fields = expr.n_deriv_fields
 
         elif isinstance(expr, BilinearForm):
@@ -508,11 +672,15 @@ class ValeCodegen(Codegen):
                 _expr = _expr.subs({Symbol(f): Symbol(B + "_0")})
                 for d in ["x", "y", "z"][:_dim]:
                     _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
+                for d in ["xx", "yy", "zz", "xy", "yz", "xz"]:
+                    _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
 
             for f in expr.args_trial.functions:
                 B = "Nj"
                 _expr = _expr.subs({Symbol(f): Symbol(B + "_0")})
                 for d in ["x", "y", "z"][:_dim]:
+                    _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
+                for d in ["xx", "yy", "zz", "xy", "yz", "xz"]:
                     _expr = _expr.subs({Symbol(f + "_" + d): Symbol(B + "_" + d)})
 
             _name  = "kernel_" + expr.name
@@ -540,6 +708,7 @@ class ValeCodegen(Codegen):
             for f_name in user_fields:
                 _expr = _expr.subs(Symbol(f_name), Symbol(f_name+"_0"))
 
+            n_deriv        = expr.n_deriv
             n_deriv_fields = expr.n_deriv_fields
 
         else:
@@ -555,11 +724,11 @@ class ValeCodegen(Codegen):
 
         stmts  = []
         stmts += [Geometry(_dim), \
-                  TestFunction(_dim)]
+                  TestFunction(_dim, n_deriv)]
         if _trial:
-            stmts += [TrialFunction(_dim)]
+            stmts += [TrialFunction(_dim, n_deriv)]
 
-        stmts += [Pullback(_dim, trial=_trial)]
+        stmts += [Pullback(_dim, n_deriv, trial=_trial)]
 
         if len(user_fields) > 0:
             stmts += [Field(_dim, n_deriv, user_fields,

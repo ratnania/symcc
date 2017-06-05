@@ -125,6 +125,10 @@ def test_model_1d():
         # ...
 
         # ...
+        matrix.export("matrix_1d.mm")
+        # ...
+
+        # ...
         from clapp.plaf.parameters.linear_solver import LAPACK_LU
         from clapp.plaf.parameters.linear_solver import DRIVER
         from clapp.plaf.linear_solver  import Linear_solver
@@ -141,12 +145,12 @@ def test_model_1d():
         phi.set(y)
         # ...
 
-        # ... plot field using matplotlib
-        import matplotlib.pyplot as plt
-
-        phi.plot(n_pts=100)
-        plt.show()
-        # ...
+#        # ... plot field using matplotlib
+#        import matplotlib.pyplot as plt
+#
+#        phi.plot(n_pts=100)
+#        plt.show()
+#        # ...
 
         # ... define the analytical solution for phi
         from clapp.vale.expressions.function import Function
@@ -183,8 +187,9 @@ def test_model_1d():
     cmd = "rm -rf input"
     os.system(cmd)
 
-    run(filename="inputs/1d/example_1.vl")
+#    run(filename="inputs/1d/example_1.vl")
 #    run(filename="inputs/1d/example_2.vl")
+    run(filename="inputs/1d/example_3.vl")
 
     cmd = "rm -rf input"
     os.system(cmd)
@@ -454,6 +459,6 @@ def test_model_3d():
 if __name__ == "__main__":
 #    test_vale()
 #    test_dsl()
-#    test_model_1d()
+    test_model_1d()
 #    test_model_2d()
-    test_model_3d()
+#    test_model_3d()
