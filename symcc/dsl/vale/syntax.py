@@ -2,7 +2,7 @@
 
 from sympy import Symbol, sympify
 
-from symcc.dsl.utilities import grad, d_var, inner, outer, cross, dot
+from symcc.dsl.vale.utilities import grad, d_var, inner, outer, cross, dot
 
 
 __all__ = ["Vale", \

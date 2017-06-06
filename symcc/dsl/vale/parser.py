@@ -1,8 +1,9 @@
 # coding: utf-8
 
+import os
 from sympy import Symbol, sympify
 
-from symcc.dsl.utilities import grad, d_var, inner, outer, cross, dot
+from symcc.dsl.vale.utilities import grad, d_var, inner, outer, cross, dot
 from symcc.dsl.vale.syntax import (Vale, \
                                    Expression, Term, Operand, \
                                    FactorSigned, FactorUnary, FactorBinary, \
@@ -42,7 +43,7 @@ class Parser(object):
     to specify the list classes to have more control over the abstract grammar;
     for example, to use a namespace, and to do some specific anotation.
 
-    >>> parser = Parser(filename="vale/gammar.tx")
+    >>> parser = Parser(filename="gammar.tx")
 
     Once the parser is created, you can parse a given set of instructions by
     calling
@@ -51,7 +52,7 @@ class Parser(object):
 
     or by providing a file to parse
 
-    >>> parser.parse_from_file("vale/tests/inputs/1d/poisson.vl")
+    >>> parser.parse_from_file("tests/inputs/1d/poisson.vl")
     """
     def __init__(self, grammar=None, filename=None, \
                  classes=None):
@@ -131,7 +132,7 @@ class ValeParser(Parser):
                    ]
 
         if filename is None:
-            filename = "vale/grammar.tx"
+            filename = "grammar.tx"
 
         super(ValeParser, self).__init__(filename = filename, \
                                          classes=classes)
