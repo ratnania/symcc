@@ -1274,6 +1274,7 @@ class LuaCodeGen(CodeGen):
         if len(returns) == 1:
             returns = ['return ' + str(returns[0]) ]
         elif len(returns) > 1:
+            returns.sort()
             returns = ['return ' + ', '.join(returns)]
         returns.append('\n')
 
