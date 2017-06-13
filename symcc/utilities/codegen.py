@@ -1275,7 +1275,7 @@ class LuaCodeGen(CodeGen):
             returns = ['return ' + str(returns[0]) ]
         elif len(returns) > 1:
             returns.sort()
-            returns = ['return ' + ', '.join(returns)]
+            returns = ['return {' + ', '.join(returns) + '}']
         returns.append('\n')
 
         # update integers: lua does not have an integer type
