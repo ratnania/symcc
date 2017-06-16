@@ -274,10 +274,16 @@ class LuaCodePrinter(CodePrinter):
         return str(expr)
 
     def _print_Pow(self, expr):
-        if expr.base.is_integer and not expr.exp.is_integer:
-            expr = type(expr)(Float(expr.base), expr.exp)
-            return self._print(expr)
-        return self._print_Function(expr)
+        if "Pow" in self.known_functions:
+            return self._print_Function(expr)
+        PREC = precedence(expr)
+        if expr.exp == -1:
+            return '1.0/%s' % (self.parenthesize(expr.base, PREC))
+        elif expr.exp == 0.5:
+            return 'sqrt(%s)' % self._print(expr.base)
+        else:
+            return 'pow(%s,%s)' % (self.parenthesize(expr.base, PREC),
+                                 self.parenthesize(expr.exp, PREC))
 
     def _print_Float(self, expr, _type=False):
         ret = super(LuaCodePrinter, self)._print_Float(expr)
