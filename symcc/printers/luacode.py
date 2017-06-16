@@ -9,6 +9,10 @@ complete source code files.
 
 """
 
+# TODO: find a solution when using math functions. For example, for the moment, we are using
+#       math.pow rather than first declaring pow as local and then calling
+#       immediatly pow.
+
 # Possible Improvement
 #
 #
@@ -47,13 +51,6 @@ known_functions = {
     "": "is_sign_positive",
     "": "is_sign_negative",
     "": "mul_add",
-    "Pow": [(lambda base, exp: exp == -S.One, "recip", 2),           # 1.0/x
-            (lambda base, exp: exp == S.Half, "sqrt", 2),            # x ** 0.5
-            (lambda base, exp: exp == -S.Half, "sqrt().recip", 2),   # 1/(x ** 0.5)
-            (lambda base, exp: exp == Rational(1, 3), "cbrt", 2),    # x ** (1/3)
-            (lambda base, exp: base == S.One*2, "exp2", 3),          # 2 ** x
-            (lambda base, exp: exp.is_integer, "powi", 1),           # x ** y, for i32
-            (lambda base, exp: not exp.is_integer, "powf", 1)],      # x ** y, for f64
     "exp": [(lambda exp: True, "exp", 2)],   # e ** x
     "log": "ln",
     "": "log",          # number.log(base)
@@ -280,9 +277,9 @@ class LuaCodePrinter(CodePrinter):
         if expr.exp == -1:
             return '1.0/%s' % (self.parenthesize(expr.base, PREC))
         elif expr.exp == 0.5:
-            return 'sqrt(%s)' % self._print(expr.base)
+            return 'math.sqrt(%s)' % self._print(expr.base)
         else:
-            return 'pow(%s,%s)' % (self.parenthesize(expr.base, PREC),
+            return 'math.pow(%s,%s)' % (self.parenthesize(expr.base, PREC),
                                  self.parenthesize(expr.exp, PREC))
 
     def _print_Float(self, expr, _type=False):
