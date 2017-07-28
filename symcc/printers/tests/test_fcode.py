@@ -370,3 +370,8 @@ def test_fcode_Declare():
             InOutArgument('double', x)))) == ("real(dp), intent(in) :: a, b\n"
                                               "real(dp), intent(inout) :: x\n"
                                               "real(dp), intent(out) :: c")
+
+#####################################################
+if __name__ == "__main__":
+    test_printmethod()
+    test_fcode_sqrt()
