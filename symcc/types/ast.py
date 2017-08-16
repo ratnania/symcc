@@ -273,7 +273,8 @@ class For(Basic):
             raise TypeError("iter must be an iterable")
         if type(iter) == tuple:
             # this is a hack, since Range does not accept non valued Integers.
-            r = Range(iter[0], 10000000, iter[2])
+#            r = Range(iter[0], 10000000, iter[2])
+            r = Range(0, 10000000, 1)
             r._args = iter
             iter = r
         else:
