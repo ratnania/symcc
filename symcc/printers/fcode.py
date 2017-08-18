@@ -179,6 +179,7 @@ class FCodePrinter(CodePrinter):
                 'end do').format(target=target, start=start, stop=stop,
                         step=step, body=body)
 
+    # TODO SHA make it work if expr is a list of sympy/symcc expressions
     def _print_Piecewise(self, expr):
         if expr.args[-1].cond != True:
             # We need the last conditional to be a True, otherwise the resulting
