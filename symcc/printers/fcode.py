@@ -1,7 +1,7 @@
 """Print to F90 standard. Trying to follow the information provided at
 www.fortran90.org as much as possible."""
 
-from __future__ import print_function, division
+
 import string
 from itertools import groupby
 

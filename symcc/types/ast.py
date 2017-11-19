@@ -42,7 +42,7 @@ AST Type Tree
      |--->Return
 """
 
-from __future__ import print_function, division
+
 
 
 from sympy.core import Symbol, Tuple
@@ -231,7 +231,7 @@ class AugAssign(Basic):
             raise ValueError("Cannot assign a matrix to a scalar.")
         if isinstance(op, str):
             op = operator(op)
-        elif op not in op_registry.values():
+        elif op not in list(op_registry.values()):
             raise TypeError("Unrecognized Operator")
         return Basic.__new__(cls, lhs, op, rhs)
 

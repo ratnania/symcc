@@ -17,7 +17,7 @@ complete source code files.
 #
 #
 
-from __future__ import print_function, division
+
 
 from sympy.core import S, numbers, Rational, Float, Lambda
 from sympy.core.function import Function
@@ -306,7 +306,7 @@ class LuaCodePrinter(CodePrinter):
         dims = expr.shape
         elem = S.Zero
         offset = S.One
-        for i in reversed(range(expr.rank)):
+        for i in reversed(list(range(expr.rank))):
             elem += expr.indices[i]*offset
             offset *= dims[i]
         return "%s[%s]" % (self._print(expr.base.label), self._print(elem))
@@ -638,4 +638,4 @@ def lua_code(expr, assign_to=None, **settings):
 
 def print_lua_code(expr, **settings):
     """Prints Lua representation of the given expression."""
-    print(lua_code(expr, **settings))
+    print((lua_code(expr, **settings)))

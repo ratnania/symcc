@@ -1,7 +1,7 @@
 # coding: utf-8
 
 
-from __future__ import print_function, division
+
 
 import os
 import textwrap
@@ -79,8 +79,7 @@ class Variable(object):
             raise TypeError("The (optional) `datatype' argument must be an "
                             "instance of the DataType class.")
         if dimensions and not isinstance(dimensions, (tuple, list)):
-            raise TypeError(
-                "The dimension argument must be a sequence of tuples")
+            raise TypeError("The dimension argument must be a sequence of tuples")
 
         self._name = name
         self._datatype = {
@@ -115,8 +114,7 @@ class Variable(object):
         try:
             return self._datatype[language.upper()]
         except:
-            print ("Has datatypes for languages: %s" % ", ".join(self._datatype))
-            raise()
+            raise ValueError("Has datatypes for languages: %s" % ", ".join(self._datatype))
 
 class Argument(Variable):
     """An abstract Argument data structure: a name and a data type.

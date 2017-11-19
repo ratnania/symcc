@@ -5,7 +5,7 @@ classes may be used directly. See the docstrings for more details.
 
 """
 
-from __future__ import print_function, division
+
 
 from sympy.core import Symbol, Tuple, Expr, Basic, Integer, Dict
 from sympy.utilities.iterables import iterable
@@ -428,7 +428,7 @@ class RoutineCallResult(Basic):
         # Sub in values to expression
         args = [i.name for i in routine_call.routine.arguments]
         values = [i for i in routine_call.arguments]
-        expr = expr.subs(dict(zip(args, values)))
+        expr = expr.subs(dict(list(zip(args, values))))
         # Create the object
         s = cls._alias_type.__new__(cls, routine_call, idx)
         s._expr = expr
