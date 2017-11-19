@@ -34,9 +34,10 @@ def setup_package():
     if 'setuptools' in sys.modules:
         setup_args['install_requires'] = ['numpy']
 
-    setup(  packages = packages \
-          , include_package_data = True \
-          , **setup_args)
+    setup(packages = packages, \
+          zip_safe=True, \
+          include_package_data=True, \
+          **setup_args)
 
 
 if __name__ == "__main__":
